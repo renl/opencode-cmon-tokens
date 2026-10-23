@@ -232,7 +232,27 @@ describe("token summary public contract", () => {
     }
   });
 
-  test("TOK-03 RPC retains old inputs and optional old reply fields", () => {
+  // Schema-shape assertions only: supported-host validation/transport is a candidate gate.
+  // Accept equivalent JSON Schema union spellings rather than prescribe schema construction.
+  function expectNullableCount(schema: {
+    type?: string | string[];
+    anyOf?: { type: string }[];
+    oneOf?: { type: string }[];
+  }) {
+    expect(schema).toBeDefined();
+    const types = schema.anyOf
+      ? schema.anyOf.map((variant) => variant.type)
+      : schema.oneOf
+        ? schema.oneOf.map((variant) => variant.type)
+        : [schema.type].flat();
+    expect(types).toContain("null");
+    expect(types.filter((type) => type !== "null")).toHaveLength(1);
+    expect(["number", "integer"]).toContain(
+      types.find((type) => type !== "null") ?? "",
+    );
+  }
+
+  test("TOK-03 RPC schema shape retains old inputs and optional old reply fields", () => {
     const rpc = JSON.parse(JSON.stringify(CostRpc));
     expect(rpc.id).toBe("cmon");
     expect(Object.keys(rpc.methods)).toEqual(["summary"]);
@@ -252,6 +272,7 @@ describe("token summary public contract", () => {
     ]);
     const tokens = rpc.methods.summary.output.properties.tokens;
     expect(tokens).toBeDefined();
+    expect(tokens.type).toBe("object");
     expect([...tokens.required].sort()).toEqual([
       "agents",
       "complete",
@@ -259,7 +280,41 @@ describe("token summary public contract", () => {
       "providers",
       "totalTokens",
     ]);
+    expect(Object.keys(tokens.properties).sort()).toEqual([
+      "agents",
+      "complete",
+      "models",
+      "providers",
+      "totalTokens",
+    ]);
+    expectNullableCount(tokens.properties.totalTokens);
+    expect(tokens.properties.complete.type).toBe("boolean");
     expect(Object.keys(rpc.events)).toEqual(["changed"]);
     expect(rpc.events.changed.schema.required).toEqual(["revision"]);
   });
+
+  test.each([
+    ["agents", "agent"],
+    ["models", "model"],
+    ["providers", "provider"],
+  ])(
+    "TOK-03 %s nested RPC schema shape uses exact %s entry fields",
+    (list, name) => {
+      const rpc = JSON.parse(JSON.stringify(CostRpc));
+      const tokens = rpc.methods.summary.output.properties.tokens;
+      expect(tokens).toBeDefined();
+      const group = tokens.properties[list];
+      expect(group.type).toBe("array");
+      expect(group.items.type).toBe("object");
+      expect([...group.items.required].sort()).toEqual(
+        [name, "totalTokens", "complete"].sort(),
+      );
+      expect(Object.keys(group.items.properties).sort()).toEqual(
+        [name, "totalTokens", "complete"].sort(),
+      );
+      expect(group.items.properties[name].type).toBe("string");
+      expectNullableCount(group.items.properties.totalTokens);
+      expect(group.items.properties.complete.type).toBe("boolean");
+    },
+  );
 });
