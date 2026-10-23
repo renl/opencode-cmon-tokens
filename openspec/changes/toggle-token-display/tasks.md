@@ -5,18 +5,18 @@ Let a user switch the existing monthly panel between exact tokens and unchanged 
 - Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
 - Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
 - Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
-- Setup status: **implementation-ready**. Architect **Boundary ACCEPT / decomposition ACCEPT**, corrections confirmed 2026-10-23 against `1a73b09` in [design review](design.md#architecture-review--2026-10-23). Checkpoint 1 complete; executable tests intentionally RED until implementation. Real-host environment preparation is independent, **not an implementation prerequisite**. No independent candidate verification yet.
+- Current status: **implementation and independent in-process checks GREEN; real-host/clean-room e2e BLOCKED**. Architect **Boundary ACCEPT / decomposition ACCEPT**, corrections confirmed 2026-10-23 against `1a73b09` in [design review](design.md#architecture-review--2026-10-23). TOK-GAP-03 resolved; candidate `73f1f09` passes 342 tests. Checkpoint 3 remains incomplete; no sync/archive/merge authorization.
 
 ## Worktree lifecycle
 
-| Field            | Value                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
-| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`                   |
-| branch / change  | `toggle-token-display` / `toggle-token-display`                                                     |
-| owner            | SDET (lifecycle); SE is later implementation custodian                                              |
-| status           | implementation-ready; checkpoint 1 complete; boundary and decomposition accepted                    |
-| next action      | CoS dispatches vertical implementation; candidate environment preparation may proceed independently |
-| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state             |
+| Field            | Value                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`             |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                               |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                        |
+| status           | implementation complete; independent in-process checks pass; real-host/clean-room e2e blocked |
+| next action      | CoS receives DevOps feasibility evidence and routes supported-host verification environment   |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state       |
 
 ## Ordered checkpoints
 
@@ -34,14 +34,14 @@ Files: tests listed below. No new production entry point, reset API, SDK depende
 
 - [x] SE implements lossless nullable-token projection, additive RPC response/schema, and shared session unit with both slots; follows design/UX, not private structure implied by tests.
 - [x] SE preserves dollar accounting/order, existing tool outputs, recording/repair/retention and durable `view` behavior. Never change authoritative tests to fit implementation.
-- [ ] Run aggregation/schema tests before rendered tests, then all regressions/static/build/format checks in the sequence below.
+- [x] Run aggregation/schema tests before rendered tests, then all regressions/static/build/format checks in the sequence below.
 
 Likely production files (SE-owned only): `src/{store,summary,types,rpc,index}.ts`, `src/tui.tsx`; no DB version or tool changes. SDET-owned tests: `src/token-summary.test.ts`, `src/token-display.test.tsx`, `src/test-support/token-host{,.test}.ts`; small layout-compatible adaptation in `src/tui.click.test.tsx` (keep assertions, locate content after the new row, provide memory API). Test setup is split into summary/adapter and rendered/specification commits to keep each checkpoint under approximately 600 changed lines.
 
 ### 3. Independent immutable-candidate verification (depends on all implementation present)
 
 - [ ] Before proof, prepare/approve the smallest bounded supported-host procedure and environment described below; environment preparation may run independently of checkpoint 2, but proof must use its pinned implemented candidate. No adapter substitution.
-- [ ] Pin implementation SHA, main SHA, clean code/test/config/dependency state, lock/build identities, OS and runtime versions. No final e2e on a moving or dirty candidate.
+- [x] Pin implementation SHA, main SHA, clean code/test/config/dependency state, lock/build identities, OS and runtime versions. No final e2e on a moving or dirty candidate.
 - [ ] Clean-room locked install, test, lint, typecheck, build and format checks; record command exits and cleanup separately.
 - [ ] SDET independently runs rendered first-use chain TOK-09 and all interaction/coverage tests, then the real host smoke below. No summary-fixture-only first-use claim.
 - [ ] Record real-host first model activity and both unit views, absence of switch accounting writes, shared slots/remount/reload/new-session behavior and RPC legacy/null/zero compatibility.
@@ -181,3 +181,35 @@ Assertion status: token suites GREEN except the TOK-10 loading literal above; th
 - Scoped baseline cleanup investigation: reproduced **58 pass / 22 fail** in 80 store/backfill tests (`node_modules/sdet-before-cleanup.log`, exit 1). All failures occur at fixture `rmSync`. Identified test-owned read-only SQLite connections never closed by chained readers (four store sites and two backfill helper factories). Added test-only reader ownership and `afterEach` close before ledger/directory cleanup, preserving every behavioral assertion. No production change, retries, sleeps, or platform conditional.
 - Same bounded command after correction: `bun run test ./src/store.test.ts ./src/backfill.test.ts`, **80 pass / 0 fail, 158 assertions**, exit 0 (`node_modules/sdet-after-cleanup.log`). This resolves the demonstrated test resource leak, not a waiver of the earlier failures or evidence of real-host compatibility. No controlled-harness/host comparison exists; no host-only hotfix loop was attempted.
 - Commit these corrections before pinning the independent candidate. Real-host/environment-sensitive gates remain BLOCKED pending separate DevOps feasibility evidence; no containers, services, global configuration, or user ledgers inspected here.
+
+## Independent immutable-candidate evidence — 2026-10-24 (SDET)
+
+**Candidate:** `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19` (test correction committed before verification), production implementation `357aa41f431ecc17322d740e47f72007b285eaec`; local target `main` unchanged at `ae05f0b69bacb0547a49873e8efd27f286b40a96`. Tracked state clean before install and after all gates. Windows x64 / PowerShell 7, Bun test runner `1.4.3-canary.1 (bb35d1b81)` (`bun --version`: `1.4.3`), Node `v22.23.1`; locked plugin `2.0.24`, core/Solid renderer `0.5.14`. Native in-process checks only; no deployment or live host artifact identity claimed.
+
+| Ordered bounded command                                                                             | Exit / assertion evidence                                                        | Cleanup                                                                                                    |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `bun install --frozen-lockfile --ignore-scripts`                                                    | 0; 503 installs checked, no changes; `node_modules/sdet-install.log`             | No tracked dependency/config/lock changes; existing dependency tree, **not clean-room installation proof** |
+| `bun run test ./src/test-support/token-host.test.ts`                                                | 0; TOK-00: 1 pass, 5 assertions; `node_modules/sdet-host.log`                    | No cleanup error                                                                                           |
+| `bun run test ./src/token-summary.test.ts`                                                          | 0; TOK-01/02/03/12/13: 39 pass, 128 assertions; `node_modules/sdet-summary.log`  | No cleanup error                                                                                           |
+| `bun run test ./src/token-display.test.tsx`                                                         | 0; TOK-04–11: 12 pass, 97 assertions; `node_modules/sdet-display.log`            | Renderer/adapter disposal passed; no cleanup error                                                         |
+| `bun run test`                                                                                      | 0; **342 pass, 0 fail / 15 files, 754 assertions**; `node_modules/sdet-full.log` | No teardown failures; former 22 failures resolved by owned-reader cleanup, not skipped                     |
+| `bunx tsc --noEmit`                                                                                 | 0; `node_modules/sdet-types.log`                                                 | Finite process exited                                                                                      |
+| `bun run lint`                                                                                      | 0; `node_modules/sdet-lint.log`                                                  | Finite process exited                                                                                      |
+| `bun run build`                                                                                     | 0; TypeScript + TUI bundle; `node_modules/sdet-build.log`                        | Finite process exited; ignored build outputs retained                                                      |
+| Canonical six-file Prettier check plus corrected `src/{store,backfill}.test.ts`; `git diff --check` | 0 / 0; `node_modules/sdet-format.log`                                            | No format/code drift                                                                                       |
+
+Every test used the canonical script (timezone/browser conditions), child-only `TMPDIR`/`TMP`/`TEMP` scoped to `node_modules/.cache/cmon-tests`; executor bounds 120 seconds (install/build 180). Each gate exited within its bound. The suite emits expected missing-source/price-timeout diagnostics from failure-path fixtures; no assertion failed.
+
+SHA-256 identities after build:
+
+- `bun.lock`: `489DCC606351DFC3CF56620B81F1AB15D090FD340ED5ACD11E5F001D499C6184`
+- `dist/index.js`: `1FCB37595B2A81CA1D45BC1F9A5E99776FF9B88D3CDB19281525B4CC8CAA5F6C`
+- `dist/tui.js`: `FF37DA1568CF14C2B7EC480C4CDCD769593994B06B2E7C9D8D6DECEB65C1409D`
+
+**Behavior evidence:** TOK-10 loading/legacy assertions now both pass. TOK-04 actual renderer clicks switch tokens/dollars without RPC/durable accounting writes and preserve Models/open state; TOK-05 selection, TOK-06 shared slot/remount/error/collapse/fresh-memory behavior, TOK-07 legacy, TOK-08 narrow widths and TOK-11 completeness markers pass. TOK-09 passes empty Tokens → normalized activity through production recorder/store/changed/RPC adapter → rendered 700 tokens and $0.25 → unchanged accounting after switching. This proves the rendered plugin integration under the test adapter, **not normal provider activity, actual host RPC/schema validation, or actual host storage lifecycle**.
+
+**Cleanup status:** PASS for independent test fixtures; no `cmon-*` fixture directories remain. The 22 directories from this session's deliberate pre-fix reproduction were removed after process exit, using only exact paths captured in `sdet-before-cleanup.log` and verifying each parent equals the owned scratch root. Remaining scratch directory is `node-compile-cache`, not a fixture ledger; logs/build/dependency cache intentionally retained. Worktree retained for ongoing change, not landed or abandoned.
+
+**Blocking evidence gaps:** no approved supported-host finite harness or environment was supplied within this dispatch. Clean-room system bootstrap/smoke, real RPC legacy/NULL/zero acceptance, actual shared-memory reload/restart lifecycle, and first normal supported model activity from an isolated installation remain **BLOCKED**, not waived/skipped/passed. DevOps separately owns feasibility evidence; SDET did not duplicate exploration, inspect/start services/containers, or inspect global host/user data. Recommendation: retain candidate and complete environment gate via CoS; no production hotfix is indicated by these in-process results. Feature-verified: **NO**; release-ready: **NO**; owner sync/archive/merge gate: **BLOCKED**.
+
+Post-verification finalization in this dispatch changes only this `tasks.md`; confirm the final committed delta against the pinned candidate is docs-only. Any subsequent code/test/dependency/configuration/target change requires affected revalidation. No baseline spec sync/archive or deployment occurred.
