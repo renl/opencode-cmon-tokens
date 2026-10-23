@@ -17,7 +17,8 @@ opencode V2-only plugin that records opencode cost per calendar month (per agent
 - Ownership: PM authors `cost-display` product spec; Architect owns change design/contracts; SDET owns tasks/tests. One change, one PR; user merges.
 - Evidence: code/test candidate `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19`; subsequent changes are documentation/verification procedure only. [Tasks and evidence](openspec/changes/toggle-token-display/tasks.md); [Linux procedure](docs/operations/linux-verification.md). Live model access requires separate authorization.
 - History: [status log](docs/status_log.md).
-- Local runtime dependency: user authorized global configuration to load this package directory. Original entries backed up and replaced in global server config; redundant TUI entry removed. Retain this worktree until global configuration is repointed; do not treat it as disposable after landing. Runtime reload still needs user confirmation.
+- Global install: standalone clone at `C:\Users\User\.local\share\opencode\plugins\opencode-cmon-tokens`, branch `toggle-token-display` at `73366cf114fab92f6b44311c5e17536517508924`; locked install/build passed. Global config now references that clone, not this worktree. Worktree remains active for unmerged feature; runtime reload still needs user confirmation.
+- Publication: [feature branch and installation README](https://github.com/renl/opencode-cmon-tokens/tree/toggle-token-display). No PR/merge; `main` unchanged. Subsequent status-only commits need not update installed code.
 
 ## Scoped installation reference
 

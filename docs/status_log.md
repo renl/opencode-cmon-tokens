@@ -21,3 +21,11 @@
 - User explicitly authorized scoped global server/CLI configuration edits and backups. General replaced the original plugin with `file:///C:/Users/User/work/projects/opencode-cmon-tokens/.worktree/toggle-token-display` in global `opencode.json`; removed the redundant original entry from `cli.json` so the package's `./tui` export loads automatically.
 - Adjacent originals preserved as `opencode.json.bak-20261024-002701` and `cli.json.bak-20261024-002701`. JSON syntax/package exports verified; unrelated settings preserved. No credentials inspected, model calls made or services restarted.
 - User should `/reload` and confirm the expanded panel offers `$` / `Tokens`. Actual runtime success remains unconfirmed. This worktree is now a global runtime dependency and must remain until configuration is repointed.
+
+## 2026-10-24 — Permanent install and published instructions
+
+- User authorized selecting a permanent location, installing/repointing global OpenCode, documenting features/installation, and committing/pushing without merging.
+- README now documents Windows/POSIX clone/build/config/update/uninstall instructions using published `toggle-token-display`, plus toggle behavior and verification limitations. SE committed and pushed `73366cf114fab92f6b44311c5e17536517508924` to `renl/opencode-cmon-tokens`; `main` unchanged, no PR/merge.
+- General independently cloned that revision from public HTTPS into `C:\Users\User\.local\share\opencode\plugins\opencode-cmon-tokens`, ran frozen install/build successfully (Bun 1.4.3, Node 22.23.1), and verified clean source/unchanged manifest and lock.
+- Backed-up global `opencode.json` now references the permanent package directory. All unrelated settings preserved, CLI config unchanged, no worktree references remain. No service restart, model calls, or live-host proof performed.
+- Installation/setup complete; user should `/reload` and confirm the selector. Permanent clone is the runtime dependency; development worktree remains active for the unmerged feature, not cleanup-ready. Feature/release verification remains blocked only on the previously recorded live-host proof.
