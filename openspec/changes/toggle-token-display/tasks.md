@@ -5,18 +5,18 @@ Let a user switch the existing monthly panel between exact tokens and unchanged 
 - Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
 - Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
 - Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
-- Current status: **implementation and independent in-process checks GREEN; real-host/clean-room e2e BLOCKED**. Architect **Boundary ACCEPT / decomposition ACCEPT**, corrections confirmed 2026-10-23 against `1a73b09` in [design review](design.md#architecture-review--2026-10-23). TOK-GAP-03 resolved; candidate `73f1f09` passes 342 tests. Checkpoint 3 remains incomplete; no sync/archive/merge authorization.
+- Current status: **implementation, independent in-process checks and disposable Linux clean-room checks GREEN; real-host e2e BLOCKED**. Architect **Boundary ACCEPT / decomposition ACCEPT**, corrections confirmed 2026-10-23 against `1a73b09` in [design review](design.md#architecture-review--2026-10-23). TOK-GAP-03 resolved; candidate `73f1f09` passes 342 tests on both recorded runtimes. Checkpoint 3 remains incomplete; no sync/archive/merge authorization.
 
 ## Worktree lifecycle
 
-| Field            | Value                                                                                         |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`             |
-| branch / change  | `toggle-token-display` / `toggle-token-display`                                               |
-| owner            | SDET (lifecycle); SE is later implementation custodian                                        |
-| status           | implementation complete; independent in-process checks pass; real-host/clean-room e2e blocked |
-| next action      | CoS receives DevOps feasibility evidence and routes supported-host verification environment   |
-| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state       |
+| Field            | Value                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`         |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                           |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                    |
+| status           | implementation and Linux clean-room checks pass; real-host e2e blocked                    |
+| next action      | CoS routes supported-host lifecycle/RPC/model proof separately; no harness expansion here |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state   |
 
 ## Ordered checkpoints
 
@@ -42,7 +42,7 @@ Likely production files (SE-owned only): `src/{store,summary,types,rpc,index}.ts
 
 - [ ] Before proof, prepare/approve the smallest bounded supported-host procedure and environment described below; environment preparation may run independently of checkpoint 2, but proof must use its pinned implemented candidate. No adapter substitution.
 - [x] Pin implementation SHA, main SHA, clean code/test/config/dependency state, lock/build identities, OS and runtime versions. No final e2e on a moving or dirty candidate.
-- [ ] Clean-room locked install, test, lint, typecheck, build and format checks; record command exits and cleanup separately.
+- [x] Clean-room locked install, test, lint, typecheck, build and format checks; record command exits and cleanup separately.
 - [ ] SDET independently runs rendered first-use chain TOK-09 and all interaction/coverage tests, then the real host smoke below. No summary-fixture-only first-use claim.
 - [ ] Record real-host first model activity and both unit views, absence of switch accounting writes, shared slots/remount/reload/new-session behavior and RPC legacy/null/zero compatibility.
 - [ ] Only after passing independent verification may CoS route owner spec sync/archive on this branch. Confirm finalization delta is docs-only; any code/test/dependency/config/baseline change requires affected revalidation.
@@ -213,3 +213,33 @@ SHA-256 identities after build:
 **Blocking evidence gaps:** no approved supported-host finite harness or environment was supplied within this dispatch. Clean-room system bootstrap/smoke, real RPC legacy/NULL/zero acceptance, actual shared-memory reload/restart lifecycle, and first normal supported model activity from an isolated installation remain **BLOCKED**, not waived/skipped/passed. DevOps separately owns feasibility evidence; SDET did not duplicate exploration, inspect/start services/containers, or inspect global host/user data. Recommendation: retain candidate and complete environment gate via CoS; no production hotfix is indicated by these in-process results. Feature-verified: **NO**; release-ready: **NO**; owner sync/archive/merge gate: **BLOCKED**.
 
 Post-verification finalization in this dispatch changes only this `tasks.md`; confirm the final committed delta against the pinned candidate is docs-only. Any subsequent code/test/dependency/configuration/target change requires affected revalidation. No baseline spec sync/archive or deployment occurred.
+
+## Independent disposable Linux clean-room evidence — 2026-10-24 (SDET)
+
+Executed the exact [DevOps procedure](../../../docs/operations/linux-verification.md): `pwsh -NoProfile -File docs/operations/verify-linux.ps1 -Verify`, host executor bound 2100 seconds; **exit 0**. No new harness, host settings, credentials or model calls. Evidence bundle: `node_modules/.cache/cmon-linux/cmon-linux-c351fc56670c47a8ad7ad98ba51afad2/` (ignored, retained).
+
+**Identity/freshness:** clean tracked worktree before and after execution; branch `toggle-token-display`, orchestration HEAD `e1488b149f8a7d5f59c7d3269706707cd2269705`. Runner exported only candidate `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19` with `git archive`; no host dependency tree or settings reused. Before/after local `main`, `origin/main` and live `git ls-remote origin refs/heads/main` all equal `ae05f0b69bacb0547a49873e8efd27f286b40a96`; remote change branch absent. Recheck target/head before any later landing.
+
+Environment: disposable Linux/amd64, WSL2 kernel `6.18.54.1-microsoft-standard-WSL2`, Bun `1.4.3+c6da4a4d3`, Node `v22.23.1`. Derived image `sha256:9d3bb1b7b2a6bf716e68bd88c47afad1b09493ee2f0cc621763381ecb7ee140c`; immutable base manifests are recorded in the procedure. This differs from the Windows canary revision; the Linux candidate checks were executed independently, not inferred equivalent.
+
+| Ordered clean-room command                                               | Exit / assertions                                      |
+| ------------------------------------------------------------------------ | ------------------------------------------------------ |
+| `bun install --frozen-lockfile --ignore-scripts`                         | 0; 457 Linux packages installed; lock SHA check passes |
+| `bun run test ./src/test-support/token-host.test.ts`                     | 0; 1 pass, 5 assertions                                |
+| `bun run test ./src/token-summary.test.ts`                               | 0; 39 pass, 128 assertions                             |
+| `bun run test ./src/token-display.test.tsx`                              | 0; 12 pass, 97 assertions, including TOK-09            |
+| `bun run test`                                                           | 0; 342 pass, 0 fail, 754 assertions / 15 files         |
+| `./node_modules/.bin/tsc --noEmit`                                       | 0                                                      |
+| `bun run lint`                                                           | 0                                                      |
+| `bun run build`                                                          | 0                                                      |
+| Local Prettier check over eight files exactly as `verify-linux.sh` lists | 0                                                      |
+
+`exits.log` records all nine gates; `verification.log` records `runner_exit=0`. `host-exits.log` records exit 0 for candidate lookup, image build/identity, archive, verification, container removal/query and image removal. Bounds: install/build 180 seconds, other gates 120; container total 1450 seconds plus kill grace, host wait 1500. All completed within bounds.
+
+**Artifacts:** Linux SHA-256 values exactly match the earlier Windows build: lock `489dcc606351dfc3cf56620b81f1ab15d090fd340ed5acd11e5f001d499c6184`; `dist/index.js` `1fcb37595b2a81ca1d45bc1f9a5e99776ff9b88d3cdb19281525b4cc8caa5f6c`; `dist/tui.js` `ff37da1568cf14c2b7ec480c4cdcd769593994b06b2e7c9d8d6deceb65c1409d`. No deployed host artifact is claimed.
+
+**Cleanup PASS, separate from assertions:** `remaining-fixtures.log` and `cleanup-check.log` are both zero bytes. Removal log says container already absent after Docker `--rm`; success is established by the empty exact-name query, not that message. A separate post-run exact-name `docker ps -aq` and derived-tag `docker image ls -q` both return empty, exit 0. Derived tag/image removed; tmpfs dependencies/home/cache/ledgers gone. Shared pinned base/build cache and ignored evidence remain intentionally; no volumes/services/global prune. Worktree retained, not landed or abandoned.
+
+**Proof boundary:** the real native renderer, clicks, selection and TOK-09 recorder/store/refresh chain pass in Linux as well as the prior Windows run. The synthetic event source, JSON RPC adapter and storage double remain proxies: no actual OpenCode host lifecycle, RPC/schema transport, or normal model/provider activity was exercised. Clean-room bootstrap/test/build gate is now PASS; real-host lifecycle/RPC/first-use gate remains **BLOCKED**, not waived/skipped. Feature-verified **NO**, release-ready **NO**, sync/archive/merge **BLOCKED**. No production hotfix indicated; CoS must route the residual host proof separately.
+
+**Delta audit:** candidate → orchestration HEAD changes only this task document and six operational files under `docs/operations/` (including executable runner/Dockerfile, not merely prose). These operational additions were reviewed and used above; they do not change exported candidate code/tests/dependencies/application configuration. Explicit candidate runtime-path diff exits 0. This verification's finalization changes only `tasks.md`; prior native rendered evidence is preserved above. No spec sync/archive, PR, merge or deployment. Any later code/test/dependency/configuration/target drift requires affected revalidation.
