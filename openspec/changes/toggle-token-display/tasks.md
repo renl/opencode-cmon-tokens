@@ -1,0 +1,126 @@
+# Toggle token display — executable work and evidence
+
+Let a user switch the existing monthly panel between exact tokens and unchanged dollars without losing the selected breakdown or collapsing it.
+
+- Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
+- Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
+- Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
+- Setup status: executable RED tests written; **not implementation-ready until Architect reviews boundary/decomposition and resolves live-host proof setup**. No independent candidate verification yet.
+
+## Worktree lifecycle
+
+| Field            | Value                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`                      |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                                        |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                                 |
+| status           | blocked: pre-implementation review and host-boundary spike                                             |
+| next action      | CoS routes Architect review, then scoped harness/environment resolution; SE dispatch remains CoS-owned |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state                |
+
+## Ordered checkpoints
+
+### 1. Host-boundary spike and test fidelity (prerequisite: none)
+
+- [x] Read approved artifacts and locked SDK; author test-only contract-shaped storage/event/RPC adapter and RED tests in this worktree.
+- [x] Run decomposition checklist and prepare Boundary Verification below.
+- [ ] Architect approves decomposition, test-only reply/storage model, and boundary block via CoS.
+- [ ] Establish a **real isolated supported host** harness proving memory and RPC before broad UI implementation. The current double is not this proof. If host interfaces fail once or twice, return to source research, not guessed adapters.
+- [ ] SDET authorizes/records the harness and environment suitability (or reports BLOCKED). Do not replace this gate with mocked tests.
+
+Files: tests listed below; prospective host harness is test-only. No new production entry point, reset API, SDK dependency, configuration, or user DB access is authorized here.
+
+### 2. One vertical implementation (depends on checkpoint 1 approved on this branch)
+
+- [ ] SE implements lossless nullable-token projection, additive RPC response/schema, and shared session unit with both slots; follows design/UX, not private structure implied by tests.
+- [ ] SE preserves dollar accounting/order, existing tool outputs, recording/repair/retention and durable `view` behavior. Never change authoritative tests to fit implementation.
+- [ ] Run aggregation/schema tests before rendered tests, then all regressions/static/build/format checks in the sequence below.
+
+Likely production files (SE-owned only): `src/{store,summary,types,rpc,index}.ts`, `src/tui.tsx`; no DB version or tool changes. SDET-owned tests: `src/token-summary.test.ts`, `src/token-display.test.tsx`, `src/test-support/token-host{,.test}.ts`; small layout-compatible adaptation in `src/tui.click.test.tsx` (keep assertions, locate content after the new row, provide memory API). Test setup is split into summary/adapter and rendered/specification commits to keep each checkpoint under approximately 600 changed lines.
+
+### 3. Independent immutable-candidate verification (depends on all implementation present)
+
+- [ ] Pin implementation SHA, main SHA, clean code/test/config/dependency state, lock/build identities, OS and runtime versions. No final e2e on a moving or dirty candidate.
+- [ ] Clean-room locked install, test, lint, typecheck, build and format checks; record command exits and cleanup separately.
+- [ ] SDET independently runs rendered first-use chain TOK-09 and all interaction/coverage tests, then the real host smoke below. No summary-fixture-only first-use claim.
+- [ ] Record real-host first model activity and both unit views, absence of switch accounting writes, shared slots/remount/reload/new-session behavior and RPC legacy/null/zero compatibility.
+- [ ] Only after passing independent verification may CoS route owner spec sync/archive on this branch. Confirm finalization delta is docs-only; any code/test/dependency/config/baseline change requires affected revalidation.
+- [ ] After the single PR lands, SDET verifies landing on main and performs safe lifecycle cleanup; merge/archive is not deployment proof.
+
+## Executable traceability
+
+Canonical commands are below. Evidence for every row: local logs plus durable setup summary in this file; candidate evidence must replace RED status after implementation.
+
+| Delta requirement / scenario                         | Design clause                                                 | Runnable assertion                                                                                                                                                                                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Token mode measures usage / all breakdowns reconcile | Availability, five disjoint columns, same rows/range, sorting | `token-summary.test.ts` TOK-01: each of 32 NULL masks; complete vector totals 700; TOK-02: failed child, compaction, zero-cost, unknown attribution, merged model, binary tie, unavailable-last, per-group completeness, half-open range, empty zero and read-only repeat |
+| Incomplete history; older server                     | Optional `tokens`, legacy names, NULL versus zero             | TOK-03 schema shape/unchanged input/required fields; TOK-07 ready partial-zero/all-unavailable/legacy/empty; TOK-10 absent optional legacy lists                                                                                                                          |
+| Clickable unit / switch both ways                    | Local presentation; preserve breakdown/open                   | `token-display.test.tsx` TOK-04: actual renderer clicks, Models preserved, token footer ranking/top-two/+1, dollars restored, no RPC/durable write                                                                                                                        |
+| Active/label/spacing; selectable content             | UX control targets and nonselectable chrome                   | TOK-05: no-op clicks and real content selection drag; existing `tui.click.test.tsx` chrome/selection regressions                                                                                                                                                          |
+| Shared session / retain until restart                | `storage.memory("unit")`, durable `view` independent          | TOK-06: independent slot remount, refresh/error recovery, collapse, new plugin mount using same memory, fresh memory resets dollars while open retained                                                                                                                   |
+| Loading/error; formatting                            | UX feedback, exact counts at narrow widths                    | TOK-10 loading; TOK-06 error/recovery; TOK-08 at 40/22 columns preserves all amount characters and clickable Providers; TOK-11 group-specific markers/one-token label                                                                                                     |
+| Unknown prices do not imply unknown tokens           | Price-independent token completeness                          | TOK-13 actual summary has missing Copilot price but 700 complete tokens; TOK-04 uses incomplete pricing + complete tokens, no token partial marker, restores dollar `~`                                                                                                   |
+| First usage from empty installation                  | Recorder → store → changed → RPC → rendered result            | TOK-09 selects empty tokens, injects supported normalized start/end **events**, asserts real plugin records 700 tokens and $0.25, preserves ledger across switch, disposes subscriptions/database and directory                                                           |
+| Preserve dollars/tools (current baseline specs)      | No monetary/tool semantic change                              | TOK-12 pure immutable dollar regression; existing `summary`, `pricing`, `money`, `tui`, `analysis`, `tools`, `index` suites; new tests do not prescribe private token function layout                                                                                     |
+
+TOK-00 (`src/test-support/token-host.test.ts`) independently sanity-checks the adapter's recording path and cleanup on the dollar baseline. TOK-09 uses real production recorder/store/debounce/feed/rendering but a test host event source and JSON adapter; it proves plugin integration, **not real model/provider or host RPC transport**. Token formula tests intentionally enter through registered summary, rather than mandate a new private pure-function signature. Existing pure dollar tests remain authoritative.
+
+## Boundary Verification — Architect review required
+
+| Boundary                               | Exact contract / source cross-check                                                                                                                                                                                                                                                              | Test and remaining proof                                                                                                                                                                                                                              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenCode event subscription → recorder | Existing `ctx.event.subscribe({signal})`, `session.step.started`/`session.step.ended`; normalized input/output/reasoning/cache.read/cache.write are disjoint per design's 2.0.24 source evidence                                                                                                 | TOK-09 observes active subscription before events and refresh after the write; host source remains doubled; real supported model activity is still required                                                                                           |
+| RPC registration/client/events         | `CostRpc.id = "cmon"`; method `summary({from:number,to:number})`, UTC half-open interval; event `changed({revision:number})`. Existing `ctx.rpc.register`, `ctx.client.rpc(CostRpc)` unchanged. New optional top-level `tokens`; present object has all five required fields specified in design | TOK-01/02 use real registered handler; JSON round-trip preserves values, TOK-03 checks schema shape. This is **not** actual host validation/transport. Real host must accept old dollar-only reply, NULL/zero nested values, and unchanged old inputs |
+| Shared TUI session storage             | Locked `@opencode/plugin@2.0.24/dist/tui/context.d.ts`: `memory<Value extends object>(key,{initial})` returns live store + **synchronous void setter**, survives reload, gone on exit; `store` setter returns Promise and persists across restart                                                | Test-only adapter matches these signatures/lifetimes; TOK-06 exercises separately mounted real components. Real host memory lifecycle remains unproved                                                                                                |
+| Terminal UI                            | Locked `@opentui/core@0.5.14`, `@opentui/solid@0.5.14`; existing `tui.click.test.tsx` uses `testRender`, `mockMouse`, selection                                                                                                                                                                  | Real native renderer, not hand-built output assertions; host lifecycle/focus/screen reader remain outside proof                                                                                                                                       |
+
+Endpoint/auth/wire URL: **N/A**, no new network endpoint or auth flow; use host RPC API, not invented HTTP/WebSocket. No name mapping. Source research references: design's pinned core/schema/AI sources and official plugin storage/RPC docs; local reference implementations are existing `src/index.ts`, `src/tui.tsx`, `src/tui.click.test.tsx`. No new platform integration is claimed.
+
+Minimal real-host smoke must start two independently mounted slots in one isolated session, switch units from actual rendered controls, navigate/remount/reload with retained tokens, exit and restart with dollars plus retained open state. Exercise actual RPC schema validation with old reply and new NULL/zero token data; then start at an empty isolated ledger and produce supported model activity through the host. Need a finite repository-owned harness with isolated data/config, readiness timeout, total timeout, bounded logs, whole-process-tree teardown and verified removal. Do not read global configuration/user databases or add application test APIs. **No such harness or isolated host endpoint exists in this checkout; gate BLOCKED.** CoS must route scoped environment setup/approval rather than treat adapter tests as this spike.
+
+## Proof versus proxy and environment decision
+
+- User-visible proof: actual rendered selection changes exact amounts/ranking, keeps open/breakdown state, updates footer, and returns to identical dollars; first normal activity fills the empty view.
+- Supporting proxies: formula/group assertions, schema-shape checks, JSON serialization, fake shared storage and synthetic normalized events. Important evidence, not real-host session/RPC/provider proof.
+- Current runs are bounded **in-process tests**, valid native diagnostics/contract assertions on Windows x64; no server, worker, staging deployment or container was launched. Timers/subscriptions belong to the test adapter/renderer and are disposed in `finally`.
+- No justified native **environment-sensitive e2e exception** has been established: absence of Docker/staging/harness does not prove the target cannot be represented in containers. Containerized supported-host harness is the default. If real Windows terminal behavior needs an exception, Architect/SDET must document why a container cannot represent it, target Windows x64/hardware, finite command/lifecycle and required host evidence before using it as a gate. No waiver is implied.
+
+## Run sequence (canonical shell: PowerShell 7 / Windows x64)
+
+Every command must run in this worktree through a bounded executor (120 seconds each; install/build up to 180 seconds), never bare `bun test`. Bun's script supplies timezone/browser conditions. All logs below live under ignored `node_modules/`; no global changes.
+
+1. `bun install --frozen-lockfile --ignore-scripts` (existing lock only).
+2. Before existing suites redirect temporary fixtures in the **child shell only**:
+   `$scratch = Join-Path $PWD 'node_modules/.cache/cmon-tests'; New-Item -ItemType Directory -Force $scratch | Out-Null; $env:TMPDIR=$scratch; $env:TMP=$scratch; $env:TEMP=$scratch`.
+3. `bun run test ./src/test-support/token-host.test.ts`, then `bun run test ./src/token-summary.test.ts`, then `bun run test ./src/token-display.test.tsx`. Require exit 0 only after implementation. Capture stdout/stderr and original exit status.
+4. `bun run test` (all regressions including both tools), `bunx tsc --noEmit`, `bun run lint`, `bun run build` (each independently bounded; stop/report failed gate).
+5. Format scope: `bunx prettier --check src/token-summary.test.ts src/token-display.test.tsx src/test-support/token-host.ts src/test-support/token-host.test.ts src/tui.click.test.tsx openspec/changes/toggle-token-display/tasks.md`. Use matching `--write` for SDET-owned files only. No repository-wide format churn.
+6. Independently run pinned candidate clean-room checks in the approved controlled harness, then real-host smoke. Record exact command/environment after harness approval; until then e2e is BLOCKED, not passed/skipped. POSIX/container command portability is not yet validated.
+
+## Decomposition fidelity checklist and risk record
+
+| Trigger                                             | Answer / reason                                                                                      |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| One unit creates inputs consumed by another?        | YES — summary/RPC supplies rendered views; checkpoint 2 depends on spike contract                    |
+| One unit changes a clean baseline needed elsewhere? | YES — first-use workflow writes; it owns a fresh isolated ledger separate from NULL-history fixtures |
+| Receiver must be active before event?               | YES — TOK-09 mounts feeds and checks subscription before pushing activity                            |
+| Final conclusion spans units?                       | YES — ledger, RPC, renderer and real host form a proof chain                                         |
+| Setup/proof split across units?                     | YES — environment setup precedes independent candidate assertions                                    |
+
+Architect review through CoS is mandatory before readiness, including test-only reply/storage adapter fidelity. No correction gap ID has been assigned; CoS owns assigning/routing any resulting gap. Preserve original evidence; SDET persists correction attempts/next owner here when assigned.
+
+## Setup evidence (2026-10-23; no feature verification)
+
+| Command / evidence (worktree-local)                                                                                                          | Exit / result                                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Locked install, Bun `1.4.3-canary.1 (bb35d1b81)`                                                                                             | 0; plugin 2.0.24, renderer 0.5.14; lock unchanged                                                                                                                                                                                                                      |
+| `bun run test ./src/token-summary.test.ts ./src/token-display.test.tsx ./src/test-support/token-host.test.ts` → `node_modules/token-red.log` | 1; **2 pass, 47 fail, 49 tests, 68 assertions**. TOK-00 adapter and TOK-12 dollar pure tests pass; 32 nullable cases + grouping + missing-price case + schema fail at absent `tokens`; rendered cases fail at absent Tokens control, not speculative imports           |
+| Existing 12 test files only (exclude `token-*`) → `node_modules/token-regressions.log`                                                       | 1; **268 pass, 22 fail / 290 tests**. All 22 failures are fixture teardown `EBUSY` in existing backfill/store suites on Windows; no production fixes attempted. No controlled-container pass exists for comparison; environmental cause is suspected, not fully proven |
+| `bunx tsc --noEmit`                                                                                                                          | 0 after test-only readonly fixture correction                                                                                                                                                                                                                          |
+| `bun run lint` → `node_modules/token-lint.log`                                                                                               | 0                                                                                                                                                                                                                                                                      |
+| `bun run build` → `node_modules/token-build.log`                                                                                             | 0; baseline TypeScript and TUI build, not clean-room/candidate readiness                                                                                                                                                                                               |
+| `bun run test ./src/tui.click.test.tsx` → `node_modules/token-click-regressions.log`                                                         | 0; 9 pass, 29 assertions, including layout-compatible test adjustments                                                                                                                                                                                                 |
+
+Scoped Prettier check from step 5: exit 0, all six owned files formatted.
+
+Assertion status: intentionally RED, not feature-ready. New token-test cleanup: no reported cleanup failure; renderer and adapter disposed. Existing-suite cleanup: failed during tests; after the finite process exited, SDET removed only its 12 `cmon-backfill-*` and 10 `cmon-store-*` scratch directories in one bounded cleanup; registry count under scratch became zero. This does not turn failed tests into passes. Worktree retained. Real-host/container e2e: not yet claimed. Logs are local scratch; this table is the durable evidence summary.
