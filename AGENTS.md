@@ -11,9 +11,16 @@ opencode V2-only plugin that records opencode cost per calendar month (per agent
 ## Current Work
 
 - Change: `toggle-token-display` — clickable dollar/token panel selector; dollar reporting and agent tools preserved.
-- State: product scope accepted; UX specified; source verification of token semantics in progress before architecture/tests/implementation.
+- State: implemented; all 342 tests and static/build checks pass independently on Windows and in a clean Linux container. Live OpenCode lifecycle/RPC/model-activity verification remains blocked; no feature/release sign-off or PR yet.
 - Target: `main`; branch: `toggle-token-display`; worktree: `.worktree/toggle-token-display` (SDET lifecycle owner).
 - Artifacts: [proposal](openspec/changes/toggle-token-display/proposal.md), [product delta](openspec/changes/toggle-token-display/specs/cost-display/spec.md), [UX](openspec/changes/toggle-token-display/ux.md).
 - Ownership: PM authors `cost-display` product spec; Architect owns change design/contracts; SDET owns tasks/tests. One change, one PR; user merges.
-- Evidence: baseline `ae05f0b69bacb0547a49873e8efd27f286b40a96` verified clean before authoring; no implementation or test readiness claimed.
+- Evidence: code/test candidate `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19`; subsequent changes are documentation/verification procedure only. [Tasks and evidence](openspec/changes/toggle-token-display/tasks.md); [Linux procedure](docs/operations/linux-verification.md). Live model access requires separate authorization.
 - History: [status log](docs/status_log.md).
+- Local runtime dependency: user authorized global configuration to load this package directory. Original entries backed up and replaced in global server config; redundant TUI entry removed. Retain this worktree until global configuration is repointed; do not treat it as disposable after landing. Runtime reload still needs user confirmation.
+
+## Scoped installation reference
+
+- User authorized permanent installation, global repointing, README updates, commit and push of `toggle-token-display` (not merge).
+- External install scope: `C:\Users\User\.local\share\opencode\plugins\opencode-cmon-tokens` only; inspect/create standalone clone, install locked dependencies, build/validate this fork. Do not inspect siblings or overwrite unrelated contents.
+- External config scope: read/edit `C:\Users\User\.config\opencode\opencode.json`, `opencode.jsonc`, `cli.json`, creating adjacent timestamped backups before changes. Preserve unrelated settings; no credential access, global scanning or live model calls.
