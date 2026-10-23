@@ -309,7 +309,7 @@ describe("rendered unit selection", () => {
     const loading = await render(pending);
     try {
       const text = (await loading.frame()).join("\n");
-      expect(text).toContain("This month: .");
+      expect(text).toContain("This month: …");
       expect(text).not.toMatch(/View|Unit|Tokens/);
     } finally {
       loading.t.renderer.destroy();
