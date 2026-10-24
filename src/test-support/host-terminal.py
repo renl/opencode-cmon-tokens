@@ -293,24 +293,27 @@ def main():
         terminal.send(b'\x1b[18~')  # observer F7: home route
         terminal.wait('0 tokens')
         terminal.frame('host-home-shared-tokens')
+        check('home footer exposes complete shared token total', '▼ 0 tokens' in terminal.text())
         terminal.sidebar()
         terminal.wait('[Tokens]')
+        terminal.click('This month')
+        terminal.pump(0.5)
+        check('collapse hides controls without losing token header', 'This month: 0 tokens' in terminal.text() and 'Unit' not in terminal.text())
+        terminal.click('This month')
+        terminal.wait('[Tokens]')
+        check('reopen retains token mode', '[Tokens]' in terminal.text())
         terminal.frame('host-sidebar-remount')
         check('remount retains token selection', '[Tokens]' in terminal.text())
         check('production RPC preserves zero token totals',observer_reply(terminal)['tokens']['totalTokens'] == 0)
         if Path('/work/observer.json').exists():
             (EVIDENCE / 'host-observer.json').write_bytes(Path('/work/observer.json').read_bytes())
-        generations = Path('/work/observer-generations.txt').read_text().count('setup')
-        terminal.send(b'\x1b[19~')  # observer F8 dispatches public location.reload
-        deadline = time.monotonic() + 30
-        while time.monotonic() < deadline:
-            terminal.pump(0.2)
-            if Path('/work/observer-generations.txt').read_text().count('setup') > generations:
-                break
-        check('public reload actually recreated plugin generation',Path('/work/observer-generations.txt').read_text().count('setup') > generations)
-        terminal.wait('[Tokens]')
-        check('reload retains token selection and durable open state','[Tokens]' in terminal.text())
-        terminal.frame('host-reloaded')
+        # location.reload is documented as configuration reload, not guaranteed
+        # plugin-generation replacement. The initial host run did not replace
+        # this observer. Do not retry it or infer memory retention from no reload.
+        RESULTS.append({'assertion':'plugin-generation reload and memory retention',
+                        'status':'BLOCKED','detail':'Supported generation-reload trigger unresolved; configuration reload did not recreate observer.'})
+        RESULTS.append({'assertion':'actual sidebar content geometry 45/40/22',
+                        'status':'BLOCKED','detail':'No supported slot-sizing control established; terminal width is not panel width.'})
     finally:
         try:
             terminal.frame('host-final')
@@ -328,6 +331,8 @@ def main():
         terminal.close()
         RESULTS.append({'cleanup':'restarted host root terminated; container owns descendants','status':'PASS'})
     compatibility()
+    if any(item.get('status') in ('FAIL', 'BLOCKED') for item in RESULTS):
+        raise AssertionError('remaining host gates are unresolved; see individual assertions')
 
 
 if __name__ == '__main__':
