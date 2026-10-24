@@ -4,6 +4,7 @@ Run only through docs/operations/prepare-host.ps1. No prompt/model calls.
 Frames/raw terminal output are bounded private evidence, not golden snapshots.
 """
 import codecs
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -57,6 +58,21 @@ export default Plugin.define({id:"cmon-acceptance-observer",setup(ctx) {
   const timer = setInterval(snapshot,500);
   return () => {alive=false;clearInterval(timer);fs.appendFileSync(generations,"dispose\n");};
 }});
+'''
+
+# Pass through the unchanged candidate definition/context/cleanup. These records
+# distinguish actual candidate activation from an observer-only replacement.
+CANDIDATE_WRAPPER = r'''
+import candidate from "/opt/candidate/dist/tui.js";
+import fs from "node:fs";
+export default {...candidate, async setup(ctx) {
+  const generation = crypto.randomUUID();
+  const record = event => fs.appendFileSync("/work/candidate-generations.jsonl",
+    JSON.stringify({event,generation,id:candidate.id,pid:process.pid})+"\n");
+  const cleanup = await candidate.setup(ctx);
+  record("setup");
+  return async () => {try {await cleanup?.();} finally {record("dispose");}};
+}};
 '''
 
 # Compatibility data are deliberately synthetic; this is real schema/transport
@@ -150,7 +166,7 @@ class Terminal:
         self.pump(0.5)
         (EVIDENCE / f'{name}.txt').write_text(self.text())
         (EVIDENCE / f'{name}.raw').write_bytes(self.raw)
-        for source in ['observer.json','observer-error.txt','observer-generations.txt']:
+        for source in ['observer.json','observer-error.txt','observer-generations.txt','candidate-generations.jsonl']:
             path = Path('/work') / source
             if path.exists():
                 (EVIDENCE / f'{name}-{source}').write_bytes(path.read_bytes()[-262144:])
@@ -189,6 +205,24 @@ class Terminal:
         except subprocess.TimeoutExpired:
             os.killpg(self.process.pid, signal.SIGKILL)
             self.process.wait(timeout=5)
+        # Root exit alone is insufficient: kill any remaining group members and
+        # assert no live process remains in the owned session. Container removal
+        # independently checks descendants that might have left this session.
+        try:
+            os.killpg(self.process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        survivors = []
+        for entry in Path('/proc').iterdir():
+            if not entry.name.isdigit():
+                continue
+            try:
+                fields = (entry / 'stat').read_text().rsplit(')', 1)[1].split()
+                if int(fields[3]) == self.process.pid and fields[0] != 'Z':
+                    survivors.append(entry.name)
+            except (FileNotFoundError, ProcessLookupError):
+                pass
+        check('owned host session has no live processes after teardown', not survivors)
         os.close(self.master)
 
 
@@ -263,7 +297,7 @@ def compatibility():
             RESULTS.append({'cleanup':mode+' host root terminated; container owns descendants','status':'PASS'})
 
 
-def main():
+def full_acceptance():
     project = Path('/work/acceptance-project')
     project.mkdir()
     (project / 'opencode.json').write_text(json.dumps({'plugins': ['file:///opt/candidate/dist']}))
@@ -333,6 +367,159 @@ def main():
     compatibility()
     if any(item.get('status') in ('FAIL', 'BLOCKED') for item in RESULTS):
         raise AssertionError('remaining host gates are unresolved; see individual assertions')
+
+
+def nodes(node, ancestors=()):
+    yield node, ancestors
+    for child in node.get('children', []):
+        yield from nodes(child, ancestors + (node,))
+
+
+def cell(terminal, text):
+    matches = [(row.index(text), y) for y, row in enumerate(terminal.screen.display)
+               if text in row and (text != '$' or 'Unit' in row)]
+    assert len(matches) == 1, f'unique visible segment required: {text!r}'
+    return matches[0]
+
+
+def geometry(terminal, name):
+    terminal.pump(1)
+    snapshot = json.loads(Path('/work/observer.json').read_text())
+    hx, hy = cell(terminal, 'This month:')
+    ux, uy = cell(terminal, 'Unit')
+    vx, vy = cell(terminal, 'View')
+    def contains(node, x, y):
+        return (node.get('x', -1) <= x < node.get('x', -1) + node.get('width', 0)
+                and node.get('y', -1) <= y < node.get('y', -1) + node.get('height', 0))
+    path = max((ancestors + (node,) for node, ancestors in nodes(snapshot['tree'])
+                if contains(node, hx, hy)), key=len)
+    panel = next(node for node in reversed(path)
+                 if contains(node, ux, uy) and contains(node, vx, vy))
+    check(name + ': measured panel contains separate View and Unit rows',
+          panel['width'] >= 22 and vy < uy and hx >= panel['x'])
+    for text in ['Agents', 'Models', 'Providers', 'Tokens', '$']:
+        x, y = cell(terminal, text)
+        row = terminal.screen.display[y]
+        left = x - (1 if x and row[x-1] == '[' else 0)
+        right = x + len(text) + (1 if row[x+len(text):x+len(text)+1] == ']' else 0)
+        check(name + ': intact in-panel segment ' + text,
+              contains(panel, left, y) and right <= panel['x'] + panel['width'])
+    amount = '0 tokens' if '[Tokens]' in terminal.text() else '$0.00'
+    x, y = cell(terminal, amount)
+    check(name + ': complete amount inside measured panel',
+          contains(panel, x, y) and x + len(amount) <= panel['x'] + panel['width'])
+    terminal.frame(name)
+    return {'panel': panel | {'children': []},
+            'ancestors': [{k:n[k] for k in ('id','x','y','width','height') if k in n} for n in path],
+            'terminal': [terminal.width, terminal.height]}
+
+
+def main():
+    # Focused continuation: earlier restart/transport/383-suite results apply to
+    # the same immutable candidate. Do not repeat their independent fixtures.
+    project = Path('/work/acceptance-project')
+    project.mkdir()
+    wrapper = Path('/work/candidate-wrapper')
+    wrapper.mkdir()
+    (wrapper / 'package.json').write_text(json.dumps({'name':'cmon-candidate-observer','type':'module',
+        'exports':{'.':'./index.js','./tui':'./tui.js'}}))
+    (wrapper / 'index.js').write_text('export {default} from "/opt/candidate/dist/index.js";')
+    (wrapper / 'tui.js').write_text(CANDIDATE_WRAPPER)
+    (project / 'opencode.json').write_text(json.dumps({'plugins':[wrapper.as_uri()]}))
+    discovery = project / '.opencode/plugins'
+    discovery.mkdir(parents=True)
+    observer = Path('/work/observer')
+    observer.mkdir()
+    package = json.dumps({'name':'cmon-acceptance-observer','type':'module','exports':{'./tui':'./tui.js'}})
+    (observer / 'package.json').write_text(package)
+    (observer / 'tui.js').write_text(OBSERVER)
+    os.environ['OPENCODE_CLI_CONFIG_CONTENT'] = json.dumps({'plugins':[observer.as_uri()],
+                                                          'animations':False,'highlights':False})
+    inputs = [Path('/opt/candidate/dist/tui.js'),Path('/opt/candidate/dist/index.js'),
+              Path('/opt/candidate/bun.lock'),wrapper/'tui.js',observer/'tui.js']
+    hashes = {str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
+    terminal = Terminal(project)
+    try:
+        terminal.wait('$0.00 this month',60)
+        terminal.sidebar()
+        terminal.click('This month')
+        terminal.wait('Tokens')
+        terminal.click('Tokens')
+        terminal.wait('[Tokens]')
+        measured = []
+        for choice in ['Agents','Models','Providers']:
+            terminal.click(choice)
+            terminal.wait(f'[{choice}]')
+            measured.append(geometry(terminal, 'geometry-'+choice.lower()))
+        terminal.click('$')
+        terminal.wait('[$]')
+        measured.append(geometry(terminal,'geometry-dollars'))
+        terminal.click('Tokens')
+        terminal.wait('[Tokens]')
+        terminal.click('Models')
+        terminal.wait('[Models]')
+        terminal.frame('reload-before')
+        generations = Path('/work/candidate-generations.jsonl')
+        before = [json.loads(line) for line in generations.read_text().splitlines()]
+        old = [item for item in before if item['event'] == 'setup'][-1]
+        observer_before = Path('/work/observer-generations.txt').read_text().count('setup\n')
+        pid = terminal.process.pid
+        # One source-grounded trigger, no config reload or guessed retry. Atomic
+        # directory rename introduces a copied test observer with a distinct id.
+        staged = Path('/work/observer-next')
+        staged.mkdir()
+        (staged / 'package.json').write_text(package)
+        copy = OBSERVER.replace('cmon-acceptance-observer','cmon-acceptance-membership')
+        (staged / 'tui.js').write_text(copy)
+        hashes['membership/tui.js'] = hashlib.sha256(copy.encode()).hexdigest()
+        staged.rename(discovery / 'acceptance-membership')
+        deadline = time.monotonic() + 30
+        after = before
+        while time.monotonic() < deadline:
+            terminal.pump(0.2)
+            after = [json.loads(line) for line in generations.read_text().splitlines()]
+            if any(item['event']=='setup' and item['generation'] != old['generation'] for item in after):
+                break
+        fresh = [item for item in after if item['event']=='setup' and item['generation'] != old['generation']]
+        check('watcher membership change actually reconstructs candidate activation', bool(fresh))
+        check('old candidate activation disposed before new setup',
+              next(i for i,item in enumerate(after) if item['event']=='dispose' and item['generation']==old['generation'])
+              < next(i for i,item in enumerate(after) if item == fresh[-1]))
+        terminal.pump(2)
+        observer_events = Path('/work/observer-generations.txt').read_text().splitlines()
+        check('observer generation also replaced', observer_events.count('setup') >= observer_before + 2
+              and 'dispose' in observer_events)
+        check('same TUI process and candidate plugin id',terminal.process.pid == pid
+              and terminal.process.poll() is None and fresh[-1]['pid'] == old['pid']
+              and fresh[-1]['id'] == old['id'] == 'opencode-cmon-tui')
+        terminal.wait('[Tokens]')
+        terminal.wait('[Models]')
+        check('actual reload retains Tokens and independent Models/open state',
+              '[Tokens]' in terminal.text() and '[Models]' in terminal.text() and '0 tokens' in terminal.text())
+        measured.append(geometry(terminal,'reload-after'))
+        terminal.send(b'\x1b[18~')
+        terminal.wait('▼ 0 tokens')
+        terminal.frame('reload-home-tokens')
+        check('reconstructed real home slot retains complete shared token total','▼ 0 tokens' in terminal.text())
+        terminal.sidebar()
+        terminal.wait('[Tokens]')
+        terminal.click('This month')
+        terminal.pump(0.5)
+        check('reload preserves independent collapse behavior',
+              'This month: 0 tokens' in terminal.text() and 'Unit' not in terminal.text())
+        terminal.click('This month')
+        terminal.wait('[Tokens]')
+        check('reopen after reload retains independent breakdown','[Models]' in terminal.text())
+        check('candidate and initial wrapper inputs unchanged',all(
+            hashlib.sha256(p.read_bytes()).hexdigest() == hashes[str(p)] for p in inputs))
+        (EVIDENCE/'supported-geometry.json').write_text(json.dumps(measured,indent=2))
+    finally:
+        (EVIDENCE/'continuation-inputs.json').write_text(json.dumps(hashes,indent=2))
+        try:
+            terminal.frame('continuation-final')
+        finally:
+            terminal.close()
+        RESULTS.append({'cleanup':'private host root terminated; container owns descendants','status':'PASS'})
 
 
 if __name__ == '__main__':
