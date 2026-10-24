@@ -5,18 +5,18 @@ Let a user read compact token amounts and switch intact controls in a narrow sid
 - Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
 - Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
 - Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
-- Current status: **C2 implemented; C3 affected presentation checks PASS, overall verification NOT CLEAN** on `6ff10b39178bd1ce9ca5acb5080c049de1e08406`: native full suite 380 pass / 1 timeout; current-candidate Linux run BLOCKED by fixed old runner pin. Boundary/decomposition ACCEPT. Earlier Windows/Linux GREEN evidence is historical, not proof of this correction. Real-host first-use/provider gates remain BLOCKED; user confirmation covers the earlier panel, not this correction. No clean local-update recommendation or sync/archive/merge/release sign-off.
+- Current status: **C2 implemented; C3 controlled candidate checks PASS** on `6ff10b39178bd1ce9ca5acb5080c049de1e08406`: clean-room Linux 381 pass; native retry 381 pass after the preserved original 380-pass/1-timeout run. The timeout did not reproduce; exact cause remains unconfirmed. Boundary/decomposition ACCEPT. Safe user-scoped local update is supported by these checks, not performed here. Real-host first-use/provider gates remain BLOCKED; no full feature verification, sync/archive/merge/release sign-off.
 
 ## Worktree lifecycle
 
-| Field            | Value                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`       |
-| branch / change  | `toggle-token-display` / `toggle-token-display`                                         |
-| owner            | SDET (lifecycle); SE is later implementation custodian                                  |
-| status           | C2 implemented; C3 partial PASS, full regression failed, Linux blocked                  |
-| next action      | CoS routes runner-pin correction and regression diagnosis; retain real-host gates       |
-| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state |
+| Field            | Value                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`        |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                          |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                   |
+| status           | C2 implemented; C3 controlled checks PASS; native transient preserved; real host blocked |
+| next action      | CoS may route authorized local update; retain real-host gates and worktree               |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state  |
 
 ## Compact counts / actual-container correction — 2026-10-24
 
@@ -41,7 +41,7 @@ Ordered work (all on this branch):
 - [x] C1 — preserve saved setup, cross-check installed layout source, establish RED contract tests and update this file. No production prerequisites missing.
 - [x] C1 review — Boundary ACCEPT in design's 2026-10-24 presentation review; its one decomposition rejection is corrected below, awaiting scoped Architect confirmation through CoS before implementation.
 - [x] C2 — after C1 review, SE changes presentation in `src/tui.tsx` only unless a contract gap is returned via CoS. Compact decimal k/M/B, half-up rounding/promotion/trimmed zeroes, singular label; actual-container fit, separate View/Unit rows, stable reserved widths, atomic clickable text, intact amounts/name truncation or stacking per UX. No accounting, RPC, schemas, ranking, recording, tools, dependencies, config or unrelated refactor. SE does not edit authoritative tests. Private layout strategy is SE-owned; no requirement to use the probed callback.
-- [ ] C3 — after C2, SDET independently verifies the immutable implemented candidate in the existing controlled approach, revalidates affected evidence, and retains the separate real-host gate. No new general harness or host/model activity authorization is implied.
+- [x] C3 — after C2, SDET independently verifies the immutable implemented candidate in the existing controlled approach, revalidates affected evidence, and retains the separate real-host gate. No new general harness or host/model activity authorization is implied.
 
 SDET files/tests (all readable in this worktree):
 
@@ -140,6 +140,41 @@ Build SHA-256: `dist/index.js` = `1fcb37595b2a81ca1d45bc1f9a5e99776ff9b88d3cdb19
 **Assertion versus cleanup:** affected rendered/pure checks PASS; full regression FAIL; controlled Linux and real-host proof BLOCKED. Native renderer/adapter teardown reported no cleanup failures; final owned scratch query found **zero `cmon-*` fixture directories**. Worktree/dependencies/build/logs intentionally retained; no worktree removal/landing authorized.
 
 **Proof limits and readiness:** rendered checks prove the correction through the production rendered controls under the locked test host, not real OpenCode slot geometry/lifecycle/RPC transport or clean first-use/provider activity. TOK-09 remains synthetic-event integration proof, not a model call. Earlier user confirmation is not this correction's live acceptance. No waiver requested or inferred. Safe local-update readiness is **NOT CLEAN / pending**, because the full regression failed and current-candidate controlled Linux evidence is unavailable; no evidence justifies changing production to mask an unconfirmed host/timing issue. CoS routes diagnosis and runner correction; real-host gates remain separate. C3 stays unchecked. Subsequent finalization in this dispatch changes only this evidence document; code/tests/dependencies/configuration and observed target remain pinned, with no merge/release claim.
+
+### C3 continuation — runner resolution and bounded regression diagnosis (2026-10-24; SDET)
+
+This continuation supersedes the pending local-update decision above, **not the original failure**. Authorization: existing Linux procedure, at most one targeted native retry and one full native retry, evidence-only commit. No production/test/operations edits, timeout relaxation, install-clone/config changes, live OpenCode/model activity, push or merge.
+
+**Candidate/freshness:** code/test candidate remains `6ff10b39178bd1ce9ca5acb5080c049de1e08406`; invoking clean HEAD `295317255ee44d7d698f51b3dc579958e3674773`. The intervening four-file delta is tasks evidence plus operations README/procedure and `verify-linux.ps1`. It is **not docs-only**: DevOps parameterized/resolved the immutable revision and added runner/archive hashes. Reviewed that delta and exercised it below; shell gates and Dockerfile are unchanged. No source, tests, dependencies, lock, application configuration or observed target changed. Local `main`/`origin/main` still `ae05f0b69bacb0547a49873e8efd27f286b40a96`; no fetch or remote-freshness claim.
+
+**Exact independent command:** `pwsh -NoProfile -NonInteractive -File docs/operations/verify-linux.ps1 -Revision 6ff10b39178bd1ce9ca5acb5080c049de1e08406 -Verify` → **exit 0**, one invocation. Existing finite orchestration (300-second image build, 1450-second container deadline, 1500-second host wait, per-gate bounds and finally cleanup); outer bound 2100 seconds. Run ID/evidence bundle: `node_modules/.cache/cmon-linux/cmon-linux-46085381a2594824a127c817709e09b7/`.
+
+- Isolated Linux/amd64, kernel `6.18.54.1-microsoft-standard-WSL2`; Bun `1.4.3+c6da4a4d3`, Node `v22.23.1`. Derived image `sha256:9d3bb1b7b2a6bf716e68bd88c47afad1b09493ee2f0cc621763381ecb7ee140c`; pinned base manifests remain those in the operations procedure. Windows canary and Linux stable Bun are explicitly different runtimes, not assumed equivalent.
+- `candidate.txt` resolves exactly the authorized SHA. Archive SHA-256 `e884507bfce9633e4b4c72f54e2850a3a3920016a39ce273bfe3fd7b2d5dfd71`; runner hashes recorded in `runner-hashes.txt`: PowerShell `c10609fb25741ec42d28ff01f9ff1268b959a68129d537b7532f7f680875aef5`, normalized shell `60a7c3827a0ef1207a21d050a32705a1762b81eb1d5a781a4c7f2eae2f09abe5`, Dockerfile `af26f2d588eb4dc4f93cdbeb35a420478530efad29c0242f26f550b3b3055c2b`.
+- Fresh frozen/ignore-scripts install: **exit 0**, 457 packages; lock verification PASS. Plugin `2.0.24`, core/Solid `0.5.14`, solid-js `1.9.15`; lock and both built artifact hashes exactly match the earlier C3 identities above.
+
+| Linux gate (`exits.log`, individual logs) | Exit / assertions                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| adapter                                   | 0; 1 pass, 5 assertions                                                                                             |
+| summary                                   | 0; 40 pass, 133 assertions                                                                                          |
+| display                                   | 0; 24 pass, 990 assertions; includes rendered controls and synthetic TOK-09                                         |
+| full                                      | 0; **381 pass / 0 fail**, 2747 assertions, 17 files, 19.07 s; includes formatting/layout/click/backfill regressions |
+| types / lint / build / scoped format      | 0 / 0 / 0 / 0                                                                                                       |
+
+**Cleanup PASS, separately from assertions:** host candidate resolution/build/identity/archive/verification/cleanup query/image removal all exit 0; `runner_exit=0`. `remaining-fixtures.log` and `cleanup-check.log` each zero bytes. Docker `--rm` had already removed the container: the final removal log says “No such container” (the CLI returned 0); the subsequent successful empty exact-name query is the absence proof. Unique image tag/content removed per `image-remove.log`; shared pinned base/build cache and ignored evidence retained. No persistent volumes/services or user data used. Worktree remains intentionally active, not eligible for removal.
+
+**Original timeout diagnosis and permitted retries:** preserved `node_modules/c3-full.log`: existing backfill chunk test exceeded its unchanged 5000 ms limit, reporting 8287.83 ms; 380 pass / 1 fail. The test synchronously creates 1200 source messages and ledger rows before chunk-fill assertions (`src/backfill.test.ts:570–584`), so the timeout encompasses fixture/storage work as well as filling; this log does not isolate a failing algorithm or establish CPU/disk contention. Previous test-process exit and zero remaining owned fixture directories were confirmed before retries; no still-running test child was reused.
+
+On unchanged Windows x64 / PowerShell 7 / Bun `1.4.3-canary.1+bb35d1b81`, Node `v22.23.1`, child-only canonical scratch variables and a 120-second process-tree-killing executor:
+
+| Single authorized retry                                                                                                           | Exit / result                                                |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `bun run test ./src/backfill.test.ts --test-name-pattern "fills in chunks across many ids"` → `node_modules/c3-cont-backfill.log` | 0; **1 pass**, 30 filtered, 2 assertions, 2.67 s total       |
+| `bun run test` → `node_modules/c3-cont-full.log`                                                                                  | 0; **381 pass / 0 fail**, 2747 assertions, 17 files, 25.34 s |
+
+Both child processes exited; owned fixture directories were zero before, between and after runs. No retries beyond these two, no test/code changes or narrow host hotfix. Characterization: **non-reproduced native timing transient, exact root cause unconfirmed**; not a zero-failure history or proof of Windows timing repeatability. Controlled Linux passed on its first candidate attempt. No host-only persistent failure remains to route as a code defect; if it recurs, stop and route environment/test timing diagnosis through CoS rather than masking it. The pricing-timeout warning also appears in the passing native run; it is not the backfill assertion failure.
+
+**Decision:** C3's bounded controlled verification is complete; safe **user-scoped local update readiness: YES**, subject to preserving the verified code/dependency/config state and separate update authorization/execution. No installed host was inspected or changed. Production-rendered narrow-panel behavior is proved under the locked adapter, while actual OpenCode slot/lifecycle/RPC/reload/clean-first-use/provider activity remains **BLOCKED**, not waived or passed. No full feature/release readiness or owner sync/archive/merge authorization follows. Next owner: CoS routes any authorized update and separately the missing real-host procedure/access. Runner gap resolved by DevOps plus this execution; no CoS gap ID supplied. This continuation's finalization delta is this evidence document only; any later non-doc delta needs affected revalidation.
 
 ## Ordered checkpoints
 
