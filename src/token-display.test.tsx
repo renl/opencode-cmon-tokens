@@ -1,5 +1,5 @@
-// spec: openspec/changes/toggle-token-display/specs/cost-display/spec.md
-// UX: openspec/changes/toggle-token-display/ux.md
+// spec: openspec/changes/archive/2026-10-24-toggle-token-display/specs/cost-display/spec.md
+// UX: openspec/changes/archive/2026-10-24-toggle-token-display/ux.md
 import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { testRender } from "@opentui/solid";

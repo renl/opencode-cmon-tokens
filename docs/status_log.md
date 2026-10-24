@@ -20,3 +20,9 @@
 - [Installation and update instructions](../README.md) cover Windows, macOS and Linux.
 
 Dollar calculations, reporting tools, recording, retention and historical repair behavior are unaffected by display-unit selection.
+
+## Specifications and validation
+
+- [Display requirements](../openspec/specs/cost-display/spec.md) cover both units, compatibility, formatting and incomplete data.
+- [Change record](../openspec/changes/archive/2026-10-24-toggle-token-display/proposal.md) includes the display design, layout and executable coverage.
+- Validation covers rendered controls, real RPC compatibility, reload and a zero-to-recorded-usage workflow with disposable data and existing authentication. New-account authentication onboarding is not covered.

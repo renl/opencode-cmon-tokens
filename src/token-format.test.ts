@@ -1,4 +1,4 @@
-// spec: openspec/changes/toggle-token-display/specs/cost-display/spec.md
+// spec: openspec/changes/archive/2026-10-24-toggle-token-display/specs/cost-display/spec.md
 // Presentation only: exact summary/RPC values are covered by token-summary.test.ts.
 import { expect, test } from "bun:test";
 import {

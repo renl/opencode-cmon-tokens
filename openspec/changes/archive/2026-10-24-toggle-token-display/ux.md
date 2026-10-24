@@ -3,7 +3,7 @@
 - **Parent / behavior authority:** [Proposal](proposal.md), [product delta](specs/cost-display/spec.md).
 - **Scope:** Existing terminal sidebar and home footer only; retain host theme, dollar formatting, recording, tools, refresh/retry and persisted open/closed behavior. This is the change-local UX reference; the design contract links here rather than duplicating it.
 - **Read next:** [Design contract](design.md) for token semantics and summary behavior. No formula is defined here.
-- **Inputs:** `src/tui.tsx`, `src/tui.test.ts`, `src/tui.click.test.tsx`.
+- **Inputs:** [Terminal UI](../../../../src/tui.tsx), [UI tests](../../../../src/tui.test.ts), [click tests](../../../../src/tui.click.test.tsx).
 
 ## Layout and hierarchy
 
@@ -88,10 +88,20 @@ Unavailable/partial token history is a ready state, not a failed request. All si
 - Current supplied controls are mouse-driven terminal text, not native focusable widgets: no plugin tab stops, keyboard shortcut, browser ARIA or live-region mechanism is evidenced in the inspected UI. Preserve host keyboard handling; do not hijack Tab or typing or claim screen-reader/keyboard compliance. Reading order is header → View choices → Unit choices → coverage → breakdowns.
 - If a supported native host focus path is available, reuse it: follow that reading order, show a visible focus indicator distinct from selection, activate choices with Enter/Space, and retain focus on the activated choice. Do not silently introduce a new navigation system. Document any remaining keyboard/screen-reader limitation; full WCAG compliance is not established by this mouse-only change. Terminal cell targets cannot promise a 44px touch target; touch-browser affordances are outside this scope.
 
-## Validation expectations
+## Validation criteria and verified coverage
 
 - Preserve established token semantics and dollar/tool contracts alongside compact formatting and actual-container fit. Document host measurement/overflow and keyboard/screen-reader limitations, not a terminal-full-width assumption.
 - Use rendered frame and coordinate-click checks at actual panel widths 45, 40 and 22 inside a wider terminal (for example 120 columns), plus resize at fixed terminal width. Cover all six unit/breakdown combinations; complete control words/brackets, nonoverlap, intact amounts and long-name truncation/stacking. Click each choice after reflow, including selected brackets; labels/gaps/active clicks must not collapse or trigger ancestors. Test dragging/selectability and unchanged keyboard handling.
 - Verify compact-format boundaries and promotion against the product table, singular/plural, partial/unavailable/empty states, long names, differing rankings that round to the same string, footer one-line truncation, both switch directions, shared mode/navigation, restart defaults and recovery. All existing dollar/tool behavior remains unchanged. Frame/click proof is required; pure formatting/packing assertions alone do not prove sidebar readability.
+
+### Completed verification
+
+The [verification record](tasks.md#verification-result) confirms these UI criteria pass for candidate `abc25236cd1f1532704654b7881ed1d05052a977`:
+
+- **Nested renderer:** actual 45/40/22-cell parents inside a 120-cell terminal, independent parent resize, rendered frames and coordinate clicks establish container adaptation, intact controls/amounts and all six unit/breakdown combinations. This is renderer proof, not a claim that the installed host allocates those three sidebar widths.
+- **Installed host:** the supported OpenCode 2.0.24 sidebar was measured at **37 available cells**. Real RPC, shared footer, plugin replacement, collapse/reopen and unchanged inputs pass at that host geometry. The 37-cell result complements rather than replaces the 45/40/22-cell renderer coverage; no host geometry was altered to simulate those allocations. Retained host checks also cover restart and compatibility replies.
+- **Provider-backed first use:** the accepted Windows OpenCode 2.1.4 variant uses existing authentication with an empty isolated ledger. Normal activity refreshes both rendered unit views to nine recorded tokens; switching leaves settled accounting, revision and dollar summary unchanged. This is not new-authentication onboarding, an entirely empty global installation or provider execution on Linux 2.0.24.
+
+These checks are complete, not outstanding acceptance tasks. Exceptional amounts wider than their dedicated line, hidden/zero-width host layout behavior and keyboard/screen-reader access remain limitations, not passed assertions. The supported host's settled padding/available width is measured; arbitrary host allocations are not promised. See the linked verification record for evidence scope and reuse; no deployment or release execution is claimed.
 
 **Accessibility limitation:** the inspected plugin provides no keyboard/focus or screen-reader contract; do not represent this reference as proof of AA conformance.

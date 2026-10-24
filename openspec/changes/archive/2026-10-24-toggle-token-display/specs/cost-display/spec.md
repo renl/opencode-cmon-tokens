@@ -4,9 +4,92 @@ Define panel behavior for retaining dollars alongside a token view.
 
 - **Parent:** [Proposal and direction check](../../proposal.md).
 - **Covered outcomes:** Unit selection, comparable breakdowns, honest token coverage, compact amounts and readable narrow controls.
-- **Read next:** [Design contract](../../design.md); no wire format is prescribed here.
+- **Read next:** [Design contract](../../design.md).
 
 ## MODIFIED Requirements
+
+### Requirement: Summary is served over RPC for a caller-supplied range
+
+The plugin SHALL expose `summary({from,to})` returning the total and the per-agent, per-model and per-provider micro-USD sums for `[from,to)`, each list sorted by amount descending then name, with a model named by its model id and a provider by its provider id, plus a `complete` flag, and SHALL emit `changed` after every write or prune.
+
+RPC id `cmon`, method `summary`, numeric UTC epoch-millisecond inputs `from` and `to`, and event `changed({revision: number})` SHALL remain unchanged. Existing response fields, dollar values, ordering and pricing completeness SHALL retain their meanings. The top-level required fields SHALL remain `revision`, `totalMicros`, `agents` and `complete`; `models` and `providers` SHALL remain optional. Existing dollar entries SHALL retain their required string name (`agent`, `model` or `provider`) and numeric `micros` fields.
+
+New servers SHALL always include an additive `tokens` object, but `tokens` SHALL remain optional in the RPC schema and consumer type to accept older servers. Within a present object, all five fields SHALL be required:
+
+| Field | Shape |
+| --- | --- |
+| `tokens.totalTokens` | Number or `null` |
+| `tokens.complete` | Boolean |
+| `tokens.agents` | Array of `{agent: string, totalTokens: number or null, complete: boolean}` |
+| `tokens.models` | Array of `{model: string, totalTokens: number or null, complete: boolean}` |
+| `tokens.providers` | Array of `{provider: string, totalTokens: number or null, complete: boolean}` |
+
+All token entry fields SHALL be required. Numeric token totals SHALL be exact nonnegative whole counts, not rounded or scaled display values; the RPC numeric shape SHALL remain `number` or `null`. No token-category drilldown SHALL be exposed.
+
+Token totals SHALL cover the same retained range rows and attribution as dollars, summing each stored disjoint input, cache-read, cache-write, output and reasoning component once. Stored zero SHALL be known; stored NULL SHALL be unknown. For the total and independently for each group, known components SHALL contribute even if other components are NULL. `complete` SHALL be true exactly when every component of every included row is known, including an empty row set. Existing rows with no known components SHALL yield `totalTokens: null` and `complete: false`; any known component, including zero, SHALL yield a numeric subtotal. An empty range SHALL yield `totalTokens: 0`, `complete: true` and empty token arrays. Token completeness SHALL be independent of pricing completeness. A complete token total SHALL NOT have a NULL total or incomplete entries; a NULL group subtotal SHALL require `complete: false`.
+
+Token arrays SHALL be separate from and SHALL NOT mutate dollar arrays. Each SHALL include every represented group, including zero and unavailable groups, with models merged across providers. Each grouping's known subtotals SHALL sum to the known range total, treating unavailable entries as adding no known amount; if the range total is unavailable, all groups SHALL be unavailable. Token arrays SHALL sort by numeric known subtotal descending, then unavailable entries, with binary ascending name order for ties, including ties between unavailable entries. Completeness SHALL NOT be a tie-breaker.
+
+Absent `tokens` SHALL NOT cause an RPC failure or imply zero usage, even for an empty dollar list or zero dollar total. Token mode SHALL remain ready with `Tokens unavailable` and the sidebar coverage explanation; dollars SHALL remain usable. Existing dollar-list names MAY supply unavailable token rows in their supplied order, without invented counts, names or token ranking. Missing legacy model/provider lists SHALL yield no rows; the footer SHALL retain its existing agent order and top-two limit. Old clients SHALL remain able to ignore `tokens`; unchanged old inputs SHALL remain accepted.
+
+#### Scenario: Range bounds are half-open
+
+- **GIVEN** rows at exactly `from` and exactly `to`
+- **WHEN** summary is requested
+- **THEN** the row at `from` is included and the row at `to` is not
+
+#### Scenario: Models are grouped by provider and model
+
+- **GIVEN** rows for model `m1` from providers `a` and `b`, and model `m2` from provider `a`
+- **WHEN** summary is requested
+- **THEN** two models `m1` and `m2` are returned, ordered by amount descending then name, with `m1` summing both providers, and their amounts sum to the total
+
+#### Scenario: Providers are grouped by provider id
+
+- **GIVEN** rows from providers `a` twice and `b` once
+- **WHEN** summary is requested
+- **THEN** two providers are returned, ordered by amount descending then name, and their amounts sum to the total
+
+#### Scenario: Token projection is additive
+
+- **GIVEN** unchanged summary inputs and the same retained rows and pricing catalog
+- **WHEN** a new server returns the summary
+- **THEN** it includes `tokens` without changing dollar fields, their ordering or pricing completeness, and the RPC schema still accepts a dollar-only response with only the existing required top-level fields
+
+#### Scenario: Present token objects require every nested field
+
+- **WHEN** a response containing `tokens` is checked against the RPC schema
+- **THEN** its five token fields are required, every entry requires its string `agent`, `model` or `provider` name, nullable numeric `totalTokens` and boolean `complete`, and omission of any of those required fields is rejected
+
+#### Scenario: Completeness belongs to each total and group
+
+- **GIVEN** one agent has all five components known and another has known input of 5 with its other components NULL, while pricing is incomplete
+- **WHEN** summary is requested
+- **THEN** the first agent is token-complete, the second has subtotal 5 and is token-incomplete, the range is token-incomplete, and each grouping's known subtotals reconcile to the range subtotal independently of pricing
+
+#### Scenario: NULL and known zero remain distinct
+
+- **GIVEN** one group has only NULL components and another has one known zero with all other components NULL
+- **WHEN** summary is serialized
+- **THEN** the first group's `totalTokens` is `null`, the second's is `0`, both have `complete: false`, and the range has numeric subtotal `0` with `complete: false`
+
+#### Scenario: Empty range is complete zero
+
+- **GIVEN** no retained rows in the requested range
+- **WHEN** summary is requested
+- **THEN** `tokens` contains `totalTokens: 0`, `complete: true` and empty `agents`, `models` and `providers` arrays
+
+#### Scenario: Token ordering preserves zero and unavailable groups
+
+- **GIVEN** groups with positive, zero and unavailable token subtotals, including equal numeric subtotals with differing completeness
+- **WHEN** summary is requested
+- **THEN** all groups appear, numeric subtotals sort descending before unavailable values, ties use binary ascending names without a completeness tie-breaker, and dollar ordering remains unchanged
+
+#### Scenario: Older server has no token projection
+
+- **GIVEN** a valid legacy summary without `tokens`, including one with zero dollars or no dollar entries
+- **WHEN** Tokens is selected
+- **THEN** the ready view shows `Tokens unavailable` and the sidebar coverage explanation rather than zero or an RPC error, missing model/provider lists yield no rows, any fallback names retain supplied dollar order with unavailable amounts, and switching to dollars remains usable
 
 ### Requirement: Cost block is collapsed by default
 
@@ -152,7 +235,7 @@ The token view SHALL cover the same monthly rows and attribution as the dollar v
 
 ### Requirement: Token formatting and incomplete history are explicit
 
-All token amounts in the sidebar and home footer, including collapsed totals and every breakdown, SHALL use the same compact decimal formatting with no dollar sign. Counts below 1,000 SHALL remain exact whole numbers. Larger counts SHALL use `k` for thousands (1,000), `M` for millions (1,000,000) and `B` for billions (1,000,000,000); `B` means billion, not million. Choose the largest applicable suffix, round its scaled value to at most two fractional digits (nearest, halfway rounded up), and remove trailing fractional zeroes and any trailing decimal point. If rounding produces `1000k` or `1000M`, promote to the next suffix and round there instead. `B` is the highest suffix; larger amounts remain expressed in billions. Use a decimal point, no digit-grouping separators, and a space before the unit label: `1 token` for exactly one, otherwise `tokens` (including abbreviated amounts). This supersedes the earlier exact-whole-count display requirement.
+All token amounts in the sidebar and home footer, including collapsed totals and every breakdown, SHALL use the same compact decimal formatting with no dollar sign. Counts below 1,000 SHALL remain exact whole numbers. Larger counts SHALL use `k` for thousands (1,000), `M` for millions (1,000,000) and `B` for billions (1,000,000,000); `B` means billion, not million. Choose the largest applicable suffix, round its scaled value to at most two fractional digits (nearest, halfway rounded up), and remove trailing fractional zeroes and any trailing decimal point. If rounding produces `1000k` or `1000M`, promote to the next suffix and round there instead. `B` is the highest suffix; larger amounts remain expressed in billions. Use a decimal point, no digit-grouping separators, and a space before the unit label: `1 token` for exactly one, otherwise `tokens` (including abbreviated amounts).
 
 Formatting SHALL NOT change recorded counts, computed totals, aggregation, ranking, dollar values or reporting tools. Reconciliation and ranking SHALL use underlying counts, not rounded display strings; independently rounded displayed breakdown amounts need not sum exactly to the displayed total. Rounding alone SHALL NOT add a partial-coverage marker.
 
@@ -223,4 +306,4 @@ On a clean installation with no recorded or imported history, the existing suppo
 ## Related Artifacts
 
 - [Proposal and technical dependencies](../../proposal.md)
-- [Current cost-display specification](../../../../specs/cost-display/spec.md)
+- [Current cost-display specification](../../../../../specs/cost-display/spec.md)

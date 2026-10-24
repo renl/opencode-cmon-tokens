@@ -1,5 +1,6 @@
-// spec: openspec/changes/toggle-token-display/specs/cost-display/spec.md
-// contract: openspec/changes/toggle-token-display/design.md (availability, RPC)
+// spec: openspec/changes/archive/2026-10-24-toggle-token-display/specs/cost-display/spec.md
+// contract: openspec/changes/archive/2026-10-24-toggle-token-display/design.md#availability-and-aggregation-invariants
+// RPC: openspec/changes/archive/2026-10-24-toggle-token-display/design.md#additive-summary--rpc-schema
 import { describe, expect, test } from "bun:test";
 import { CostRpc } from "./rpc";
 import { server } from "./test-support/token-host";

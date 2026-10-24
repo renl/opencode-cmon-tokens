@@ -2,7 +2,7 @@
 
 Prepare a pinned, credential-free Linux host for independent terminal and RPC verification.
 
-Parent: [operations](README.md). Application acceptance cases: [test plan](../../openspec/changes/toggle-token-display/tasks.md#supported-host-verification-setup).
+Parent: [operations](README.md). Application acceptance cases: [test plan](../../openspec/changes/archive/2026-10-24-toggle-token-display/tasks.md#verification-result).
 
 ## Finite invocation
 
@@ -50,7 +50,7 @@ The build verifies the entire host tarball **before** reading its executable, re
 - Create separate project/state roots for lifecycle and compatibility fixtures. Write `opencode.json` with `{"plugins":["file:///opt/candidate/dist"]}` in the selected project. **Set the child process working directory to that project**, then launch `opencode --standalone` under a PTY. A positional directory with a different working directory produced HTTP 400 on the cost RPC in the startup probe; matching the working directory restored the empty dollar panel.
 - The pinned binary's own `--help` confirms `--standalone` and `reload`; `opencode reload --help` confirms `--server` and `--standalone`. The [CLI documentation](https://opencode.ai/v2/docs/cli) explains private-server operation. Do not invoke bare `opencode reload` against a shared background service. The [installation instructions](../../README.md#install) describe `/reload`; its behavior on the private running TUI still requires independent verification.
 - `pty.openpty()` supplies input/output descriptors. `termios.tcsetwinsize()` changes terminal size; this does not independently measure slot width. `pyte.Screen`/`ByteStream` supplies rendered-cell parsing. **Pyte is not a complete modern terminal or automatic query responder.** The acceptance runner must handle required terminal queries, mouse encoding, alternate-screen behavior, resize signals and actual slot measurements, and record unsupported cases rather than infer success. No guessed host geometry or RPC API is provided here.
-- Use the supported real plugin RPC interfaces from the [test plan](../../openspec/changes/toggle-token-display/tasks.md#boundary-contracts-and-limits); no replacement endpoint is created by this environment.
+- Use the supported real plugin RPC interfaces from the [test plan](../../openspec/changes/archive/2026-10-24-toggle-token-display/tasks.md#executable-coverage); no replacement endpoint is created by this environment.
 
 ## Bounds, readiness and teardown
 

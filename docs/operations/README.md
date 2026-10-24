@@ -2,6 +2,8 @@
 
 Prepare isolated verification environments without touching user installations or production.
 
+The Linux runner checks formatting of live source/test files, not immutable archive history. `openspec/changes/archive/2026-10-24-toggle-token-display/tasks.md` is excluded, like earlier archives; this is not a formatting pass for that historical file. Preserve archived bytes and verify their identity separately.
+
 ## Environment and isolation
 
 - Target: disposable Docker Linux/amd64 on the reachable local engine.

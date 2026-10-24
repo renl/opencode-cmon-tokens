@@ -132,11 +132,12 @@ Recorded history is not part of the install directory. Uninstalling leaves `cmon
 
 ## Limitations
 
-Automated checks cover recording, storage, pricing and summary logic and the rendered TUI, with test doubles standing in for the host. They do not exercise a live opencode host, so these remain unverified there:
+Automated checks cover recording, storage, pricing, summary logic and the rendered panel, with test doubles standing in for the host. The live path was also exercised on Windows with opencode 2.1.4, using an existing login and a fresh, empty database: the panel mounted, the server and panel exchanged their expected messages, and ordinary provider activity appeared in both units. Not proved by that run:
 
-- plugin lifecycle and TUI slot mounting;
-- RPC transport and payload acceptance between the server and TUI plugins;
-- the first normal provider activity after a clean install.
+- signing in or setting up a completely fresh opencode installation, which may behave differently from reusing an existing login;
+- the panel in a normal desktop install on macOS or Linux; Linux so far has only automated host runs in containers;
+- terminal widths other than the measured ones, and amounts too wide for their line;
+- keyboard navigation and screen readers; the controls are mouse-clicked terminal text.
 
 Token display is presentational: it does not change stored costs, and dollar figures remain the basis for ordering, the agent tools and the summaries.
 

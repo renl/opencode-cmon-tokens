@@ -29,7 +29,7 @@ gate full 120 bun run test
 gate types 120 ./node_modules/.bin/tsc --noEmit
 gate lint 120 bun run lint
 gate build 180 bun run build
-gate format 120 ./node_modules/.bin/prettier --check src/token-summary.test.ts src/token-display.test.tsx src/test-support/token-host.ts src/test-support/token-host.test.ts src/tui.click.test.tsx src/store.test.ts src/backfill.test.ts openspec/changes/toggle-token-display/tasks.md
+gate format 120 ./node_modules/.bin/prettier --check src/token-summary.test.ts src/token-display.test.tsx src/test-support/token-host.ts src/test-support/token-host.test.ts src/tui.click.test.tsx src/store.test.ts src/backfill.test.ts
 sha256sum bun.lock dist/index.js dist/tui.js > /evidence/artifacts.sha256
 find /work/tmp -maxdepth 1 -type d -name 'cmon-*' > /evidence/remaining-fixtures.log
 if [ -s /evidence/remaining-fixtures.log ]; then echo 'Fixture cleanup failed'; exit 1; fi

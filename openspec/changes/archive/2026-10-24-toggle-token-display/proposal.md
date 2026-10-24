@@ -2,7 +2,7 @@
 
 Keep monthly dollar reporting and let users inspect token usage in the same panel.
 
-- **Parent:** [Current cost-display capability](../../specs/cost-display/spec.md).
+- **Parent:** [Current cost-display capability](../../../specs/cost-display/spec.md).
 - **Covered outcomes:** Switch units without losing dollar reporting; honest historical token coverage; compact amounts and readable narrow controls.
 - **Read next:** [Product behavior delta](specs/cost-display/spec.md).
 
@@ -19,7 +19,7 @@ Dollars describe spend, but users also need to compare monthly token usage acros
 
 - Add a clickable unit selector to the opened, ready sidebar. Its selection applies to the sidebar and home footer totals and breakdown amounts, including when collapsed.
 - Start each TUI session in dollars. Keep the selection during refresh, collapse/reopen and navigation within that session; do not persist it across restart. This matches the existing session-only breakdown choice and avoids introducing a saved preference.
-- Show clearly labelled compact token amounts using decimal `k` (thousand), `M` (million) and `B` (billion), at most two fractional digits, trimmed trailing zeroes and unit promotion at rounding boundaries. Counts below 1,000 remain exact. This supersedes the earlier exact-whole-count display requirement.
+- Show clearly labelled compact token amounts using decimal `k` (thousand), `M` (million) and `B` (billion), at most two fractional digits, trimmed trailing zeroes and unit promotion at rounding boundaries. Counts below 1,000 remain exact.
 - Keep controls readable at a sidebar content width of 45 character cells: no midword control-label breaks, jumbled choices or overlap between names and amounts. Layout details are defined in the [UI specification](ux.md).
 - Preserve underlying counts, aggregation and ranking; mark incomplete historical coverage separately from incomplete pricing.
 - Preserve historical rows and all existing dollar results. A new installation can start at zero and acquire usage through normal recorded model activity, without manual data setup.
@@ -52,6 +52,6 @@ None.
 ## Related Artifacts
 
 - [Product acceptance criteria](specs/cost-display/spec.md)
-- [Existing token recording behavior](../../specs/cost-recording/spec.md)
-- [Existing history/retention behavior](../../specs/cost-retention/spec.md)
+- [Existing token recording behavior](../../../specs/cost-recording/spec.md)
+- [Existing history/retention behavior](../../../specs/cost-retention/spec.md)
 - Relevant source: `src/tui.tsx`, `src/types.ts`, `src/summary.ts`, `src/rpc.ts`, `src/store.ts`.

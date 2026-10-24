@@ -1,5 +1,5 @@
 // Test-only locked-renderer probe, not a required production implementation strategy.
-// Contract: toggle-token-display/design.md, Container layout contract.
+// Contract: openspec/changes/archive/2026-10-24-toggle-token-display/design.md#container-layout-contract
 import { expect, test } from "bun:test";
 import { testRender } from "@opentui/solid";
 import { type BoxRenderable } from "@opentui/core";

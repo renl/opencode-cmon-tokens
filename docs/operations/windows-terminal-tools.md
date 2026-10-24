@@ -2,7 +2,7 @@
 
 Prepare a local ConPTY terminal and bounded process-tree launcher without opening OpenCode or sending provider traffic.
 
-Parent: [operations](README.md). Test criteria and terminal assertions remain in the [test plan](../../openspec/changes/toggle-token-display/tasks.md#windows-authenticated-service-no-call-readiness).
+Parent: [operations](README.md). Test criteria and terminal assertions remain in the [test plan](../../openspec/changes/archive/2026-10-24-toggle-token-display/tasks.md#executable-coverage).
 
 ## Installed tools
 

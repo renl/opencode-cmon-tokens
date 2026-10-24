@@ -1,4 +1,4 @@
-// spec: openspec/changes/toggle-token-display/specs/cost-display/spec.md
+// spec: openspec/changes/archive/2026-10-24-toggle-token-display/specs/cost-display/spec.md
 // contract: design.md, Footer available-space invariant
 import { expect, test } from "bun:test";
 import { testRender } from "@opentui/solid";
