@@ -118,6 +118,8 @@ At an available sidebar content width of 45 character cells, the opened, ready p
 
 The unit SHALL default to dollars on every TUI restart, without altering persisted open/closed state. A unit change SHALL apply to both sidebar and footer, survive refresh, navigation and collapse/reopen within the session, and leave breakdown selection independent.
 
+Unit retention includes actual plugin replacement within the same running TUI and plugin identity, not merely a configuration refresh. Breakdown independence means unit clicks do not change the selected breakdown; ordinary summary refresh and collapse/reopen also leave that selection unchanged. It does not introduce breakdown retention across disposal and reconstruction of the sidebar during plugin replacement: returning to the existing Agents default there is acceptable, provided Tokens remains selected in both slots and the persisted open/closed state is retained.
+
 #### Scenario: Retain the choice until restart
 
 - **GIVEN** Tokens is selected
