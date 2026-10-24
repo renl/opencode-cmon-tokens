@@ -5,18 +5,18 @@ Let a user read compact token amounts and switch intact controls in a narrow sid
 - Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
 - Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
 - Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
-- Current status: **compact-format/container correction tests RED; setup complete pending scoped Architect boundary/decomposition review via CoS**. Earlier `73f1f09` Windows/Linux GREEN evidence remains historical, not proof of this correction. Real-host e2e remains BLOCKED; user-reported live operation after the `/dist` configuration correction is not independent first-use/provider acceptance. No sync/archive/merge authorization.
+- Current status: **presentation tests RED; Boundary ACCEPT; stale spacing assertion corrected, pending scoped Architect decomposition confirmation via CoS**. Earlier `73f1f09` Windows/Linux GREEN evidence remains historical, not proof of this correction. Real-host e2e remains BLOCKED; user-reported live operation after the `/dist` configuration correction is not independent first-use/provider acceptance. No sync/archive/merge authorization.
 
 ## Worktree lifecycle
 
-| Field            | Value                                                                                   |
-| ---------------- | --------------------------------------------------------------------------------------- |
-| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`       |
-| branch / change  | `toggle-token-display` / `toggle-token-display`                                         |
-| owner            | SDET (lifecycle); SE is later implementation custodian                                  |
-| status           | presentation correction RED tests saved; scoped review pending; real-host e2e blocked   |
-| next action      | CoS routes scoped Architect review, then bounded SE presentation correction             |
-| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state |
+| Field            | Value                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`         |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                           |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                    |
+| status           | presentation RED; Boundary ACCEPT; spacing correction awaiting decomposition confirmation |
+| next action      | CoS obtains scoped Architect confirmation, then bounded SE presentation correction        |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state   |
 
 ## Compact counts / actual-container correction — 2026-10-24
 
@@ -39,7 +39,7 @@ Founder-visible success: **Can I read compact monthly usage and click every comp
 Ordered work (all on this branch):
 
 - [x] C1 — preserve saved setup, cross-check installed layout source, establish RED contract tests and update this file. No production prerequisites missing.
-- [ ] C1 review — CoS obtains **scoped interface-fidelity and decomposition-fidelity review** of this correction block/tests before implementation; historical acceptance is not acceptance of the new layout boundary probe.
+- [ ] C1 review — Boundary ACCEPT in design's 2026-10-24 presentation review; its one decomposition rejection is corrected below, awaiting scoped Architect confirmation through CoS before implementation.
 - [ ] C2 — after C1 review, SE changes presentation in `src/tui.tsx` only unless a contract gap is returned via CoS. Compact decimal k/M/B, half-up rounding/promotion/trimmed zeroes, singular label; actual-container fit, separate View/Unit rows, stable reserved widths, atomic clickable text, intact amounts/name truncation or stacking per UX. No accounting, RPC, schemas, ranking, recording, tools, dependencies, config or unrelated refactor. SE does not edit authoritative tests. Private layout strategy is SE-owned; no requirement to use the probed callback.
 - [ ] C3 — after C2, SDET independently verifies the immutable implemented candidate in the existing controlled approach, revalidates affected evidence, and retains the separate real-host gate. No new general harness or host/model activity authorization is implied.
 
@@ -54,7 +54,7 @@ SDET files/tests (all readable in this worktree):
 | UX stable selected-width packing                                                                                         | `src/tui.click.test.tsx`: retain click/no-op/selection assertions, update three row-text expectations for reserved blank cells.                                                                                                                                                                                                                                 |
 | Source-check gate only, not feature proof                                                                                | `src/test-support/layout-boundary.test.tsx` TOK-20: test-only BoxRenderable ref/onSizeChange sees 45→22→40→45 parent widths while terminal stays 120. Production must not import/depend on this probe.                                                                                                                                                          |
 
-### Boundary Verification — scoped review required
+### Boundary Verification — scoped Architect ACCEPT 2026-10-24
 
 External renderer remains locked `@opentui/{core,solid}@0.5.14`; no endpoint/auth/URL/payload/name mapping changes. Existing storage/RPC boundaries above are unchanged. Source check performed against **installed locked files**, not guessed APIs:
 
@@ -85,6 +85,13 @@ Scoped six-file Prettier check (`node_modules/compact-resume-format.log`) and `g
 Assertion status: deliberately **RED**, not implementation-ready until scoped review. Cleanup: renderer/adapter disposal reported no failure; zero `cmon-*` directories remain in owned scratch. Existing dependencies/logs/build retained, worktree retained. Only a lint-equivalent test regex and this evidence doc followed the recorded full run; no behavior/production changes.
 
 Freshness consequence: prior `73f1f09` accounting/RPC/runtime-source evidence remains historical and useful; changed presentation tests/criteria invalidate prior display/layout and overall candidate sign-off for this correction. Re-run affected checks on the implemented pinned candidate and controlled Linux harness (its existing pinned export must be updated by its owner to that candidate, not silently reuse `73f1f09`). Finalization must remain docs-only after successful independent verification, or affected revalidation is required. Existing unresolved live-host lifecycle/RPC/clean first-use/provider gates stay unresolved, not newly passed or newly required for implementation.
+
+### Scoped assertion correction — 2026-10-24
+
+- Gap reference: design's “Presentation correction review”, decomposition table (`src/tui.click.test.tsx`, “Controls still work”); CoS gap ID not supplied. Attempt 1, against setup `89d9943`: replace only the stale Providers row string with `View  Agents    Models    [Providers]`. Actual coordinate click and collapse assertions are preserved; production and other owners' dirty files remain untouched.
+- Bounded affected check: `bun run test ./src/tui.click.test.tsx` (120 seconds, same child-only fixture scratch variables) → exit **1**, **5 pass / 4 fail**, 25 assertions, 9 tests. Log: `node_modules/spacing-correction-tests.log`. All four failures demand approved reserved-width spacing; the corrected assertion now reports expected four-space gaps versus current two-space production gaps. This is expected presentation RED, not a candidate pass. No cleanup failure reported.
+- Static checks: scoped Prettier write, `bunx --no-install eslint src/tui.click.test.tsx`, and `git diff --check` each exit **0**. No full suite/build rerun for this one-string correction; previous RED evidence remains historical.
+- Readiness: **correction submitted, C2 NOT READY pending Architect scoped confirmation**; Boundary ACCEPT remains unchanged. Next owner: CoS routes confirmation, then implementation. No additional setup, production change, host proof or finalization authorization is claimed.
 
 ## Ordered checkpoints
 

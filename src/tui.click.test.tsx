@@ -187,7 +187,7 @@ describe("sidebar chrome", () => {
     const rows = await frame();
     await t.mockMouse.click(col(rows, "Providers"), 1);
     expect((await frame())[1]!.trim()).toBe(
-      "View  Agents  Models  [Providers]",
+      "View  Agents    Models    [Providers]",
     );
     await t.mockMouse.click(0, 0);
     expect((await frame())[1] ?? "").not.toContain("View");
