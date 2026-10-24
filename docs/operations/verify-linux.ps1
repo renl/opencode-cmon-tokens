@@ -1,9 +1,13 @@
 [CmdletBinding()]
-param([switch]$Verify)
+param(
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^[0-9a-fA-F]{7,40}$')]
+    [string]$Revision,
+    [switch]$Verify
+)
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 Set-Location $root
-$candidate = '73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19'
 $id = 'cmon-linux-' + [guid]::NewGuid().ToString('N')
 $scratch = Join-Path $root "node_modules/.cache/cmon-linux/$id"
 New-Item -ItemType Directory -Force $scratch | Out-Null
@@ -30,7 +34,11 @@ function Invoke-Finite([string]$Exe, [string[]]$Arguments, [int]$Seconds, [strin
 $imageCreated = $false
 $containerAttempted = $false
 try {
-    Invoke-Finite git @('cat-file', '-e', "$candidate^{commit}") 15 'candidate'
+    # Accept only hexadecimal commit IDs; resolve once so no moving ref can drift.
+    Invoke-Finite git @('rev-parse', '--verify', '--end-of-options', "$Revision^{commit}") 15 'candidate-resolve'
+    $candidate = [IO.File]::ReadAllText((Join-Path $scratch 'candidate-resolve.log')).Trim()
+    if ($candidate -cnotmatch '^[0-9a-f]{40}$') { throw 'Revision did not resolve to one full commit SHA' }
+    [IO.File]::WriteAllText((Join-Path $scratch 'requested-revision.txt'), "$Revision`n", $utf8)
     [IO.File]::WriteAllText((Join-Path $scratch 'candidate.txt'), "$candidate`n", $utf8)
     Copy-Item (Join-Path $PSScriptRoot 'verification.Dockerfile') (Join-Path $scratch 'Dockerfile')
     Invoke-Finite docker @('build', '--platform', 'linux/amd64', '--pull', '--tag', $id, $scratch) 300 'image-build'
@@ -39,9 +47,13 @@ try {
     # Normalize only the operations runner, never candidate files.
     $script = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'verify-linux.sh')).Replace("`r`n", "`n")
     [IO.File]::WriteAllText((Join-Path $scratch 'verify-linux.sh'), $script, $utf8)
+    Get-FileHash -Algorithm SHA256 (Join-Path $scratch 'Dockerfile'), (Join-Path $scratch 'verify-linux.sh'), $PSCommandPath |
+        Format-List | Out-String | Set-Content (Join-Path $scratch 'runner-hashes.txt')
     $containerAttempted = $true
     if ($Verify) {
         Invoke-Finite git @('archive', '--format=zip', "--output=$scratch/candidate.zip", $candidate) 30 'archive'
+        Get-FileHash -Algorithm SHA256 (Join-Path $scratch 'candidate.zip') |
+            Format-List | Out-String | Set-Content (Join-Path $scratch 'source-snapshot-hash.txt')
         Expand-Archive -LiteralPath (Join-Path $scratch 'candidate.zip') -DestinationPath (Join-Path $scratch 'source')
         Invoke-Finite docker @('run', '--name', $id, '--rm', '--platform', 'linux/amd64', '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--pids-limit=256', '--memory=6g', '--cpus=2', '--tmpfs', '/work:rw,exec,size=4g', '--mount', "type=bind,source=$scratch,target=/input,readonly", '--mount', "type=bind,source=$scratch,target=/evidence", $id, 'timeout', '--signal=TERM', '--kill-after=10s', '1450s', 'bash', '/input/verify-linux.sh') 1500 'verification'
     } else {

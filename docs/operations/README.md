@@ -5,7 +5,7 @@ Prepare isolated verification environments without touching user installations o
 ## Approved environment and actions
 
 - Target: disposable Docker Linux/amd64 on the reachable local engine.
-- Candidate: `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19`; later `3caf328` changes only verification documentation.
+- Current authorized candidate: `6ff10b39178bd1ce9ca5acb5080c049de1e08406` (prior evidence checkpoint: `3d634094`). Pass it explicitly with `-Revision`; the runner resolves and records one immutable commit SHA. Accepting a revision does not authorize verification of other artifacts.
 - Authorized: operations documentation/scripts, pinned image discovery/pull/build and bounded image-readiness probes. SDET separately owns execution of candidate verification.
 - No production, shared data deletion, host home/config/auth mounts, global settings, dependency/test changes, provider calls or persistent services.
 - Docker manages image storage. Do not inspect its host storage directories. Scratch stays in ignored `node_modules/.cache/cmon-linux/`.
