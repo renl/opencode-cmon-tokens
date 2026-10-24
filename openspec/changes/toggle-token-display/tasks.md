@@ -6,6 +6,42 @@ References: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md
 
 ## Implementation checklist
 
+### Final integrated-candidate decision
+
+**BLOCKED: controlled lint fails; baseline reconciliation/archive must wait.** Token switching, real-host replacement and the accepted clean-ledger provider workflow pass. This decision supersedes earlier readiness statements below; those entries retain historical failure evidence.
+
+- [x] Commit public-module observer correction before pinning a clean candidate: `6aa9af926d14ed363056105db6231b42f27ec5ef`.
+- [x] Run clean controlled Linux installation, default tests and typecheck: PASS, 383 tests / 3,723 assertions.
+- [ ] Pass controlled lint: FAIL, `docs/operations/authenticated-candidate.mjs` lines 63/77/91 report undefined `URL`, `Request`, `Buffer`. No correction attempted in this verification. Next action: correct the operations adapter's lint integration, then rerun the controlled sequence on a newly pinned clean candidate. Gap identifier pending assignment.
+- [ ] Complete the controlled runner's subsequent build and format stages: NOT REACHED because it stops on lint failure. The independent Docker host's frozen installation/build passes; this does not mark the stopped sequence complete.
+- [x] Run 18 pure Windows driver safety tests: PASS, no runtime or provider invocation.
+- [x] Revalidate affected credential-free Docker host observer/rendering/RPC/replacement path: PASS, 45 assertions plus a separate cleanup receipt. Real RPC has complete zero token/dollar totals and empty groups; rendered controls, measured 37-cell sidebar, shared footer, source-triggered replacement, collapse/reopen and unchanged inputs pass.
+- [x] Reconcile retained provider proof with current input identities: PASS, no new requests. Native clean-ledger workflow, accounting invariance and sustained cleanup remain valid under the accepted existing-authentication exception only.
+- [x] Verify disposable-resource cleanup independently: both new containers absent and invocation image tags removed; native retained run has empty Job Object membership and 30-second no-process/no-write cleanup PASS.
+- [ ] Authorize finalization only after the lint/build/format gates pass and candidate/target freshness is reconfirmed.
+
+Commands: the existing Linux procedure with `-Revision 6aa9af926d14ed363056105db6231b42f27ec5ef -Verify`; the existing host procedure with the same revision and `-Driver src/test-support/host-terminal.py`; `python -s src/test-support/authenticated-terminal.test.py`. Both Docker procedures own finite startup, deadlines and teardown. No staging exists for these local host boundaries; network-disabled Linux OpenCode 2.0.24 is suitable for credential-free checks, not authenticated provider proof.
+
+Evidence bundles under ignored `node_modules/.cache/`:
+
+| Check                             | Bundle / result                                                                                                                                                        |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Controlled Linux                  | `cmon-linux/cmon-linux-81c0081a36124090a5e6b8a149825a87`: install, adapter, summary, display, full and types exit 0; lint and runner exit 1; cleanup exit 0            |
+| Actual Docker host                | `cmon-host/cmon-host-318bc1d75808471491dee47fa285c215`: host-run and cleanup exit 0; frames, real RPC snapshots, generations, input hashes and image identity retained |
+| Retained native provider workflow | `cmon-auth/run-b8e92ba88875437e82a33ba99d246b3a`: 30 assertions PASS; `first-use.json`, `ready.json`, Job Object proof and `cleanup.json` independently inspected      |
+
+Pinned provenance:
+
+- Live target `main` and merge-base remain `ae05f0b69bacb0547a49873e8efd27f286b40a96`, confirmed against the remote after execution. No target integration occurred.
+- Production source is byte-identical to `9a55b54b0db1ea9546811aed55da1a54c95baf89`. Server SHA256 `1fcb37595b2a81ca1d45bc1f9a5e99776ff9b88d3cdb19281525b4cc8caa5f6c`, TUI `643163b107ea1226cf1bb5236b067b724f887d791a1de6d59bd30e6fea40cbbe`, lock `489dcc606351dfc3cf56620b81f1ab15d090fd340ed5acd11e5f001d499c6184` match both the new Docker build and retained native export. Package/build/CI configuration is unchanged from the target.
+- Candidate `src/` Git tree `7bf9e0ff21f70a2aa53e714c6a8907ae0821114b`; operations tree `2bf46106833fd1ca51678aa5e9b7fcbd9955ffda`. These identify all committed tests, harnesses, wheel requirements and operations inputs, including the newly exposed lint failure.
+- Executed Docker observer driver SHA256 `f00041bd059a3897e0da156f67956428fcd8bb7705d62ab1d1bc03492ceb9eb8`. The public-module import correction is a test change, not docs-only; its actual loader/replacement path was rerun. Earlier restart and four compatibility-fixture proofs are reused for unchanged implementation/fixture bodies; they were not repeated or counted as new assertions.
+- Native driver SHA256 `19a880cd0faa748aa9fc9cfd203909ecdddf60106ac744bdf8073f948118cc63` equals `ready.json` and current source. Adapter SHA256 `0e45eba7edb36dae68d8f40a487741978d5aee9259b2b3f40eb71c98a5b744c1` equals both current operations source and the executed scratch copy. Preparation SHA256 `e25a822de5c9dfa50bb4fd992d61fdf703079896d80434861846e557c889b68d`; containment launcher `ff95d43f624feca65a9e3ca1735c77b8d8fd033f72f7f84b37a3f9e59165ee23`; ConPTY gate `803fdfb636e9d5264c2f78cdaa2762ae7619cae572f27f4775b4d02dd4f2c5f5`.
+
+Provider proof is one normal nine-token recording/refresh through real RPC and both rendered unit views, with unchanged settled rows, revision and dollar summary after switching. Cumulative retained usage remains two requests, USD 0.02 reserved and USD 0.000004 recorded; this phase made zero requests. Existing opaque login reuse on Windows OpenCode 2.1.4 is explicitly accepted. **New-authentication onboarding, an entirely empty global installation, provider execution on Linux 2.0.24, deployment and release execution remain uncovered.** Do not label them passed.
+
+Lifecycle: path `.worktree/toggle-token-display`; branch/change `toggle-token-display`; owner test engineering; status retained, unmerged; next action resolve lint and reverify before finalization, then retain through verified landing; cleanup evidence is disposable-resource cleanup only, not worktree-removal readiness. No branch/worktree removal, baseline sync, archive, PR or merge occurred. After the pinned candidate, this verification changes only this task/evidence document; any later code/test/dependency/configuration/target change requires affected revalidation.
+
 ### Bounded provider first-use acceptance
 
 #### Final affected verification — PASS
