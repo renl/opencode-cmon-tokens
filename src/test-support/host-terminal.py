@@ -493,9 +493,9 @@ def main():
               and terminal.process.poll() is None and fresh[-1]['pid'] == old['pid']
               and fresh[-1]['id'] == old['id'] == 'opencode-cmon-tui')
         terminal.wait('[Tokens]')
-        terminal.wait('[Models]')
-        check('actual reload retains Tokens and independent Models/open state',
-              '[Tokens]' in terminal.text() and '[Models]' in terminal.text() and '0 tokens' in terminal.text())
+        terminal.wait('[Agents]')
+        check('actual replacement retains Tokens/open state and resets local breakdown to Agents',
+              '[Tokens]' in terminal.text() and '[Agents]' in terminal.text() and '0 tokens' in terminal.text())
         measured.append(geometry(terminal,'reload-after'))
         terminal.send(b'\x1b[18~')
         terminal.wait('▼ 0 tokens')
@@ -503,6 +503,8 @@ def main():
         check('reconstructed real home slot retains complete shared token total','▼ 0 tokens' in terminal.text())
         terminal.sidebar()
         terminal.wait('[Tokens]')
+        terminal.click('Models')
+        terminal.wait('[Models]')
         terminal.click('This month')
         terminal.pump(0.5)
         check('reload preserves independent collapse behavior',
