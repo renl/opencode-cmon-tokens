@@ -16,3 +16,5 @@ Prepare isolated verification environments without touching user installations o
 | --- | --- |
 | [Linux verification](linux-verification.md) | Pinned images, finite clean-room commands, cleanup and evidence |
 | [Host preparation](host-preparation.md) | Credential-free host lifecycle/RPC requirements and verification limitations |
+
+Host preparation uses `prepare-host.ps1`, `host.Dockerfile` and `host-smoke.py`; see its procedure for the immutable host/terminal pins and optional independent Python runner interface. Runtime networking remains disabled; provider activity is not authorized by these commands.
