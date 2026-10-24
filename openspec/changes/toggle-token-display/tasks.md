@@ -6,6 +6,57 @@ References: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md
 
 ## Implementation checklist
 
+### Bounded provider first-use acceptance
+
+Current result: **FAIL; cleanup PASS**. Application candidate remains `9a55b54b0db1ea9546811aed55da1a54c95baf89`; no application, dependency or build input changed. The existing 383-test controlled result and 75 credential-free host checks are retained, not rerun. This uses the approved Windows 2.1.4 same-authentication exception: empty isolated ledger/import, not a completely new authentication installation.
+
+Test scope: `src/test-support/authenticated-terminal.py` and `authenticated-terminal.test.py`. Default execution remains no-call. Explicit `--first-use` enables only one public `session.prompt` submission from the actual terminal observer after the same process passes zero-state, provenance, private inventory/location, General/Flash selection, absent admission, empty ledger/import and live Job Object containment assertions. The observer rechecks the exact session's General/Flash selection immediately before submission. No shared-service API, credential/config read, normal-history deletion or accounting fixture is used.
+
+The opened empty dollar footer is uniquely `▼ $0.00`; `this month` belongs only to the collapsed footer (`src/tui.tsx:237-238`). The previous closed-caption expectation was a test defect, not cropping or an application defect. The corrected assertion passes with real zero tokens and dollars in both slots.
+
+Commands from the change worktree, PowerShell, bounded:
+
+```powershell
+python -B src/test-support/authenticated-terminal.test.py
+# Default no-call readiness; do not execute both host modes for one authorization.
+python -B src/test-support/authenticated-terminal.py
+# Requires explicit provider-use authorization; one workflow only, no automatic rerun.
+python -B src/test-support/authenticated-terminal.py --first-use
+```
+
+Pure tests: 30-second bound. A selected host command: 480-second outer bound, 300-second owned job, bounded individual waits and 30-second post-cleanup stability. The existing adapter rejects auxiliaries, retries, wrong models/endpoints, redirects and fourth physical sends. The positive driver changes only its fresh scratch adapter's reservation to USD 0.01 per attempted send, at most USD 0.03 under the USD 0.05 authorization. Official Flash peak rates were reconfirmed before launch: USD 0.30/M input, USD 1.20/M output; fixed tiny tool-free body, thinking disabled, output at most 256. Reservations are conservative accounting, not actual billing.
+
+| Gate                                                                                        | Result                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Same-run pre-admission readiness                                                            | PASS: 21 assertions, including exact zero sidebar/footer, complete zero real RPC, empty ledger/meta, absent import/admission, zero reservations, candidate hashes, private observer and live terminal/observer containment |
+| Single workflow submission                                                                  | Public API acknowledged once; user message visible in actual terminal; no further invocation                                                                                                                               |
+| Provider transport and normal recording                                                     | FAIL: no HTTP-attempt lifecycle event, reservations 0, rows/meta 0 and RPC revision 0 at the recording deadline. No assistant result established. No actual served model or provider billing response exists               |
+| Token SUM → RPC → compact sidebar/footer; unchanged dollars/rows/revision after unit clicks | NOT REACHED; zero-state proof is not provider-backed acceptance                                                                                                                                                            |
+| Preferences and admission                                                                   | PASS: original Agents breakdown, collapsed cost block, hidden sidebar and dollar mode restored through public controls; admission removed before process termination                                                       |
+| Whole-tree and sustained cleanup                                                            | PASS independently: actual terminal and observer host in owned job; no remaining members or run-scoped external process; no late ledger/counter/lifecycle writes for 30 seconds; shared service untouched                  |
+
+Evidence: ignored `node_modules/.cache/cmon-auth/run-ba28f91aa86f4e37b29e6c919bd6f820/`, especially `first-use-failure-summary.json`, `assertions.json`, `empty-render-verified.json`, zero frames, `submitted.json`, `requests.json`, `lifecycle.jsonl`, `observer.json`, `job.json`, preference-restoration files and `cleanup.json`. No request crossed the instrumented transport: **0 attempted provider requests, USD 0 reserved, USD 0 recorded**. This is not a claim about unrelated normal usage or a provider billing audit.
+
+The executed driver incorrectly let `wait("OK")` match the submitted user text `Reply OK.`; it then failed at the bounded recording deadline. The final test-only correction requires an exact assistant line and captures failure frames before restoration; its new false-positive regression passes. It also retains sanitized pre-submit selection metadata. These final driver changes have pure validation only; no second host/provider workflow ran. Do not infer the missing-dispatch cause or a final-driver runtime pass from these checks.
+
+Final validation: 15 pure harness tests pass; `git diff --check` passes. Positive assertions remain executable but unproved. Gap ID pending assignment; one authorized workflow submission, zero production corrections. Next action: diagnose the admitted session's absent execution using scoped public/private-host evidence before separately authorizing any new workflow. No automatic retry, application hotfix, sync, archive, merge or release-ready claim. Worktree `.worktree/toggle-token-display`, branch/change `toggle-token-display`, lifecycle owner test engineering: retained; next action resolve first-use execution; landing/cleanup pending, disposable process cleanup verified above.
+
+### Private terminal startup correction
+
+No-call readiness targets unchanged application `9a55b54b0db1ea9546811aed55da1a54c95baf89` in the existing change worktree. Test scope: `src/test-support/authenticated-terminal.py` and its pure regression suite only. Normal sidebar visibility and cost-panel open preference must be captured and restored through public controls; no settings-file access is permitted.
+
+The matching 2.1.4 source review establishes that `session.sidebar.toggle` exposes `Hide sidebar` when open and `Show sidebar` when hidden. A five-second MCP toast can obscure the month header; absence of that header is not evidence of a hidden sidebar. The observer uses the locked public `commands()`/`dispatch()` API, rejects occupied F8/F9 bindings, ensures visibility only when hidden and restores the original visibility. After toast expiry, the existing glyph-aware helper ensures the cost block is open before mouse actions.
+
+Run order (PowerShell, bounded): `python -B src/test-support/authenticated-terminal.test.py` (30 seconds), then `python -B src/test-support/authenticated-terminal.py` (480 seconds). The second command owns fresh candidate preparation/build and the finite private-host job; retain frames, public-command state/actions, RPC, empty ledger, zero reservations, original/restored preferences, actual terminal/plugin-host containment and 30-second post-cleanup stability evidence. This is no-call rendered readiness, not provider-backed first use. No admission file or model request is authorized; all prior acceptance gates remain unchanged.
+
+- [ ] Pass corrected private-host rendered zero-token/zero-dollar readiness and preference restoration with zero reservations and sustained cleanup.
+
+Result: **BLOCKED**, one corrected startup run, exit 1. All 11 pure harness regressions pass, including executing the actual observer command adapter for initially visible/hidden states, repeated ensure and restoration. In private bundle `node_modules/.cache/cmon-auth/run-bf7b7f52843d4afda4ca612fda564f6a/`, 15 assertions pass before the home-dollar wait for `$0.00 this month` expires. Actual sidebar frames show `0 tokens` without partial/dollar rows, then `$0.00` and `[$]`; unchanged real RPC reports complete zero with empty groups. The new startup path succeeds. Readiness as a whole does not pass; no further host attempt or inferred provider readiness follows this new failure.
+
+`sidebar-actions.jsonl` records hidden→visible and visible→hidden, each dispatched only for a state mismatch. `ui-restoration.json` and `sidebar-restoration.json` both pass: original cost-open false and sidebar-visible false are restored. `job.json` proves actual terminal/application containment, empty remaining membership and successful cleanup; `post-run-no-call.json` independently confirms observer plugin-host containment, empty ledger/meta, absent import source/admission and zero attempts/reserved USD. `cleanup.json` passes the 30-second no-process/no-write check. Evidence also includes `empty-sidebar-{tokens,dollars}.txt`, `empty-footer-tokens.txt`, `worker.log`, `assertions.json` and `final.raw`. The final text frame is captured after restoration, not at the failed home-dollar wait; do not use it to diagnose that footer failure.
+
+Gap ID pending assignment; startup correction attempts: one test-only correction, zero production corrections. Next owner: terminal-interface diagnosis, routed for source-grounded review of the new home-dollar wait before another run. Earlier controlled/Linux results remain separate; do not mask host-dependent behavior with application hotfixes. No ready one-call inference command is supplied because readiness failed and this driver intentionally has no admission/prompt path. The existing adapter ceiling remains three attempted requests and USD 0.05; this run admits none.
+
 - [x] Read the five disjoint token columns losslessly in the existing summary snapshot; preserve NULL versus zero, per-group completeness, range boundaries and raw-value ordering.
 - [x] Add an optional `tokens` RPC response block without changing existing inputs, dollar fields, database version or tool outputs. When present, the block contains all five fields required by the design.
 - [x] Share the selected unit between sidebar and footer through session memory. Keep durable breakdown/open state independent; a fresh session defaults to dollars.
@@ -263,3 +314,131 @@ This correction is test-only, not a docs-only finalization delta; its affected h
 This delta is **not docs-only**: the affected terminal driver and wrapper were executed against the immutable application in the isolated read-only, network-disabled host. No full-suite rerun or archive/sync/merge readiness is inferred. Candidate application bytes are protected by the read-only runtime; hashes are retained by the existing preparation wrapper and smoke check.
 
 Post-run artifact checks: Python AST parsing, Bun parse/bundle of all three embedded test modules with imports external, task Markdown formatting and `git diff --check` exit 0. These do not override the failed runtime assertion.
+
+## Windows authenticated-service no-call readiness
+
+Scope: the [conditional native exception](design.md#conditional-native-exception-authenticated-service-isolated-ledger), candidate `9a55b54b0db1ea9546811aed55da1a54c95baf89`, Windows OpenCode 2.1.4. This checkpoint permits setup and zero-state rendering only, not arming or inference. Existing Linux results are retained without a full-suite repeat. An isolated ledger on shared authentication is not a separate empty installation.
+
+**BLOCKED before terminal startup:** CPython 3.12.10 and Node 22.23.1 are available, but Python `winpty` and `pyte` are absent. Node `node-pty`, `@lydell/node-pty` and `@xterm/headless` are also absent. Dependency-discovery commands exited 0; absence is not a rendered test pass. No service, terminal, session, preparation run or provider request was started at this checkpoint. The earlier retained scratch location remains unarmed; its previously reported reactivation blocker is unresolved and was not reprobed or deleted.
+
+### Required local test-tool preparation
+
+[PyWinpty 2.0.15](https://github.com/andfoy/pywinpty/tree/v2.0.15) documents native ConPTY support and read/write/resize interfaces. [Pyte 0.8.2](https://github.com/selectel/pyte/tree/0.8.2) supplies rendered screen cells. The test-only [wheel requirements](../../../src/test-support/windows-terminal-requirements.txt) pin Windows x64 CPython 3.12 wheels and SHA256 values from versioned PyPI metadata. No application dependency or lockfile changes are needed.
+
+Environment preparation, **not executed**; run from the worktree root, each command bounded to 120 seconds. Use a project-local environment, no global installation, source build, credential/config access or service startup:
+
+```powershell
+python -m venv node_modules/.cache/cmon-native-tools
+node_modules/.cache/cmon-native-tools/Scripts/python.exe -m pip --isolated install --disable-pip-version-check --no-input --only-binary=:all: --require-hashes -r src/test-support/windows-terminal-requirements.txt
+node_modules/.cache/cmon-native-tools/Scripts/python.exe -c "from winpty import PtyProcess, Backend; import pyte; print('terminal libraries available')"
+```
+
+Preparation must also provide a verified Windows Job Object containment mechanism for **only the owned TUI descendants**, with no breakaway, kill-on-close, and finite absence verification. A PTY root's `terminate()` alone is not whole-tree proof. Never place the existing shared service in that job or terminate it. Do not start an attached TUI until containment and scoped sustained scratch disposal are established.
+
+### Remaining executable gates
+
+- [ ] Prepare the pinned local terminal tools; validate ConPTY selection and containment with a harmless finite child, without OpenCode or provider traffic.
+- [ ] Resolve the existing location's sustained-disposal blocker through scoped supported interfaces; do not refresh/delete its active adapter or repeat eviction as a workaround.
+- [ ] Implement and validate one finite no-call runner: normal `opencode` from fresh scratch, child-only inline candidate configuration, terminal-query replies, bounded rendered cells and coordinate clicks, real scoped RPC observer, 120-second readiness / 30-second assertions / 10-minute overall / 60-second cleanup limits. Publish its exact invocation only after it exists.
+- [ ] Assert matching candidate build hashes, absent history source, empty ledger, zero reservations and no admission file, fixed UTC month, complete numeric zero RPC with empty groups, actual sidebar/footer dollars and `0 tokens`, with cleanup status separate. No seeded accounting, prompt, paid safety probe or broad regression repeat.
+
+No executable Windows rendered acceptance command exists yet. Dependency preparation is not harness readiness or release proof. Hook-rejection source proof was supplied for the matching host, but does not resolve missing terminal infrastructure or disposal. Independently inspected DeepSeek 2.1.4 driver uses `https://api.deepseek.com/v1/chat/completions` and `max_tokens`; the adapter fixes model `deepseek-flash`, non-thinking, one `Reply OK.` message and 256 output tokens. The current official peak rates remain USD 0.30/M input and USD 1.20/M output: the documented 1,000-input reservation computes USD 0.0006072 per attempt and USD 0.0018216 for three. These source/arithmetic checks are not physical-request, tokenizer, rendering or cleanup proof and do not authorize arming the retained earlier adapter.
+
+### Windows application-driver checkpoint
+
+The later [terminal-tool result](../../../docs/operations/windows-terminal-tools.md) supersedes missing-dependency setup above. The [sustained-disposal result](../../../docs/operations/authenticated-runtime-feasibility.md#sustained-disposal-and-native-tool-continuation) also resolves the earlier retained-location blocker. Neither establishes application launch fidelity.
+
+Test-only driver: `src/test-support/authenticated-terminal.py`; pure safety checks: `src/test-support/authenticated-terminal.test.py`. The supervisor prepares a fresh candidate, bounds build and Job Object execution, and performs scoped disposal outside that job even if the worker fails. It has **no prompt or arming implementation**. Its observer imports the actual candidate RPC and samples the real TUI client; it does not replace a slot or inject accounting. Session creation explicitly requests General, `deepseek/deepseek-flash`, a fixed title and deny-all permissions. Existing session/history records are never deleted. Evidence remains in ignored scratch.
+
+No-call diagnostic command, from the change worktree, outer timeout 600 seconds:
+
+```powershell
+python -s src/test-support/authenticated-terminal.py
+```
+
+2026-10-24 result, unchanged application candidate `9a55b54b0db1ea9546811aed55da1a54c95baf89`:
+
+| Gate                                                                    | Result                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Candidate server/TUI/lock hashes                                        | PASS: exact hashes match the earlier verified candidate                                                                                                                                                |
+| Isolated server active, inherited server absent                         | PASS in scoped plugin inventory                                                                                                                                                                        |
+| Empty scratch ledger, absent import source/admission, zero reservations | PASS before session creation                                                                                                                                                                           |
+| Actual rendered candidate and TUI RPC                                   | FAIL: sidebar `This month` deadline expired; observer never produced a file. The terminal rendered the empty session, but not the candidate panel. Generic `$0.00` text is not candidate proof.        |
+| Actual application process containment                                  | NOT PROVED: Job Object observed worker PID 12316, but not recorded ConPTY application PID 34848. Tool-smoke containment is not substituted for application containment.                                |
+| Scoped candidate cleanup                                                | PASS: admission absent, exact owned session interrupted, scratch wrapper reference removed, scoped eviction/disposal, fresh inventory inactive and 30 seconds without lifecycle/ledger/counter changes |
+| Process cleanup                                                         | Recorded worker and PTY PIDs independently absent after the run; job reports no remaining members. Whole descendant coverage remains unproved.                                                         |
+| Provider activity                                                       | NONE: no prompt operation or admission; attempts 0 and reserved USD 0                                                                                                                                  |
+
+Private bundle: `node_modules/.cache/cmon-auth/run-ba955a7903a74adf89ac7869352ad543/` (`assertions.json`, `final.txt`, `terminal.json`, `job.json`, `plugins.json`, `cleanup.json`). A separate preparation-only bundle `run-6aca78b0ad78418a8764c60a44f3c7c2/` was built but never loaded or armed. Preserve both; no normal data was edited.
+
+**Blocked, not ready to arm.** No first-use command is supplied. The controlled container/credential-free results remain unchanged and were not repeated. Stop at this Windows launch/environment boundary rather than changing production code or iterating host-specific hotfixes. Gap ID pending assignment; correction attempts: zero; next required work: source-ground the actual Windows child environment/plugin activation and process identity/Job Object membership before another application run. No paid safety probe, guessed route, spec sync, archive or merge follows this checkpoint.
+
+Final test-artifact validation: five pure safety tests pass; Python AST parsing, task Markdown formatting and `git diff --check` exit 0. These checks do not repair or supersede the failed application run. No production or operations files were edited; existing dirty files were preserved. The change worktree remains retained with landing/cleanup still pending.
+
+### Private standalone no-call checkpoint
+
+The preceding shared-service launch is superseded by the [private-host interface](../../../docs/operations/standalone-readiness.md). The test worker now launches exactly the documented Python ConPTY gate with its live parent PID, then `opencode --standalone`, with the scratch project as its actual working directory. All inventory, session creation and RPC observation use only that terminal's client; the default shared-service API and shared-location eviction paths are removed. Observer imports are relative source paths without scoped-package URL encoding. An explicit observer-ready record, matching default RPC location, active candidate inventory, General/Flash session and exact candidate zero are required before success. A `$0` amount anywhere in the token frame rejects zero proof; a generic footer amount never proves the candidate panel.
+
+Command (worktree root, outer bound 520 seconds; no prompt or admission path):
+
+```powershell
+python -s src/test-support/authenticated-terminal.test.py
+python -s src/test-support/authenticated-terminal.py
+```
+
+2026-10-24, unchanged application candidate `9a55b54b0db1ea9546811aed55da1a54c95baf89`:
+
+| Gate                                                | Result                                                                                                                                                                                                                                                                |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pure safety checks                                  | PASS: six tests, including private gate launch, no shared API path, stable observer imports and rejection of misleading zero matches                                                                                                                                  |
+| Candidate build/lock hashes                         | PASS: exact pinned server, TUI and dependency-lock hashes                                                                                                                                                                                                             |
+| Actual terminal containment                         | PASS: bootstrap PID 29556 and suspended application PID 24584 in the actual job inventory; worker/parent/creation identities recorded; membership proved before resume; effective flags 8192, no breakaway                                                            |
+| Private server adapter                              | Lifecycle records candidate ready on host 2.1.4; not a substitute for effective private inventory or actual client RPC proof                                                                                                                                          |
+| Observer activation / private default RPC           | FAIL: observer-ready deadline at 60 seconds; no observer-ready, RPC, inventory, session or observer-error file. The final screen reports one plugin failure. Actual activation error remains uncaptured; its cause is not established                                 |
+| General/Flash and candidate sidebar/footer controls | NOT REACHED. Home rendered Build with a DeepSeek model label; this is not the required General/Flash session evidence. The generic `$0.00` footer is not zero acceptance                                                                                              |
+| No-call state                                       | PASS: fresh ledger absent before launch, empty rows/meta after cleanup, absent history source/admission, attempts 0 and reserved USD 0                                                                                                                                |
+| Cleanup (independent of assertions)                 | PASS: actual job empty after termination; no run-command-line process outside the job after cleanup or 30 seconds later; ledger/lifecycle/counter fingerprints unchanged over that interval. Forced private-host teardown does not claim a graceful disposal callback |
+
+Private evidence: `node_modules/.cache/cmon-auth/run-20b876032be944ed9da027776e4951d4/`: `assertions.json`, `job.json`, `job.pty.json`, `terminal.json`, `final.txt`, `final.raw`, `worker.log`, `cleanup.json`, `post-run-no-call.json`, `lifecycle.jsonl`. A finite offline import of the retained observer module succeeds (`observer-import-diagnostic.txt`); this rules out that isolated import failure only, not host loading or setup failure.
+
+**BLOCKED, not ready to arm.** One standalone host run failed; no host retry or model call followed. Gap ID pending assignment; correction attempts: zero after this failure; next owner: runtime/plugin-loading diagnosis with matching-host source evidence and the actual private TUI plugin activation error. Preserve this failure rather than changing production RPC, guessing routes, accepting a generic zero footer, or treating module import as activation. No runnable model-call command, first-use pass, sync/archive/merge, release proof or docs-only-finalization claim is supplied. Test harness changed; existing operations/contract dirty files remain outside this edit's ownership. Worktree remains retained, landing and lifecycle cleanup pending.
+
+### Public-module loader correction: no-call result
+
+The matching Windows 2.1.4 loader rejected the observer's direct dependency path: `@opencode/plugin/dist/tui/index.js` is not host-provided; plugins must use host modules. Both test observer templates now import `@opencode/plugin/tui`. The candidate RPC fixture import remains unchanged. No application, operations, dependency, authentication or archived content was edited by this correction.
+
+One finite invocation of the preceding no-call command used the unchanged `9a55b54b0db1ea9546811aed55da1a54c95baf89` application. Seven pure safety tests and `git diff --check` pass.
+
+| Gate                                               | Result                                                                                                                                                                                                        |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Candidate identity and private observer activation | PASS: all three pinned hashes; active candidate inventory; observer ready on the owned project; no new loader exception                                                                                       |
+| General/Flash and budget before admission          | PASS: supplied configuration and created session select `general`, `deepseek/deepseek-flash`; attempts 0, reserved USD 0; no admission file or prompt                                                         |
+| Real candidate zero                                | RPC snapshot has revision 0, complete dollar/token zero and empty groups; ledger rows/meta empty, import source absent. Unique rendered `This month: $0.00` established                                       |
+| Rendered unit controls and zero tokens             | FAIL: after the header coordinate click, `Unit` did not appear within 30 seconds. Final frame remains collapsed (`▶ This month: $0.00`). Token/footer assertions were not reached; no readiness pass inferred |
+| Process containment and cleanup                    | PASS independently: actual ConPTY/application job membership proved before resume; job empty after teardown; no run-scoped process outside job; ledger/lifecycle/counter fingerprints stable for 30 seconds   |
+
+Evidence: `node_modules/.cache/cmon-auth/run-69655f02687e4bc897023c39b66985a0/`, including `failure.json`, `worker.log`, `final.txt`, `final.raw`, `observer-ready.json`, `observer.json`, `session.json`, `assertions.json`, `job.json` and `cleanup.json`. Worker/orchestration exit 1; cleanup PASS. No shared service was terminated.
+
+**BLOCKED, not ready to arm.** Loader correction succeeds; the remaining failure is rendered interaction on this host, not evidence for a second production loading defect. Controlled rendered clicks previously passed, so stop for host/environment variability review rather than iterate native click workarounds. Gap ID pending assignment; one source-grounded loader correction, zero production corrections. Next action: establish matching-host input/terminal fidelity before another run. Existing real-call bounds remain three total requests and USD 0.05 maximum, but no arming or request is authorized by this checkpoint. Worktree retained; landing/cleanup pending. This test delta is not docs-only and does not authorize sync/archive/merge.
+
+### Desired-state header correction: bounded no-call checkpoint
+
+Offline frame review supersedes the preceding input-fidelity diagnosis: the earlier header was initially open (`▼`), and the unconditional click correctly closed it (`▶`). Coordinates, SGR mouse input and ConPTY were already verified; no further input research or production correction is justified by that timeout. The native exception permits inherited durable UI preferences, not a claim of fresh collapsed UI settings.
+
+The test driver now waits for a unique quiescent visible header, reads its actual glyph, records a pre-action frame and expected toggle, and clicks only if the requested state differs. A failed transition does not retry the click. It restores the original open preference through the UI when that preference was safely observed; no durable settings file is read or mutated. Added assertions cover empty token breakdowns and the home token footer before returning to dollars. The observer adds a session-navigation key for that public rendered path. Application, operations, authentication and archive files are unchanged by this correction.
+
+Validation: `python -s src/test-support/authenticated-terminal.test.py` passes nine pure tests, including all four initial/desired open-state pairs and failed-transition/no-retry behavior. Exactly one finite `python -s src/test-support/authenticated-terminal.py` run followed, against pinned application `9a55b54b0db1ea9546811aed55da1a54c95baf89`; it exited 1. No second host run followed.
+
+| Gate                                                              | Result                                                                                                                                                                                                                                    |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Candidate identity, private observer and RPC                      | PASS: pinned build/lock hashes, owned project default RPC, active candidate, complete revision-zero dollar/token totals and empty groups                                                                                                  |
+| Actual terminal containment                                       | PASS: ConPTY bootstrap PID 24008, suspended application PID 46156 and actual observer host PID 26848 in the owned job; pre-resume membership verified                                                                                     |
+| Visible candidate header                                          | FAIL: `This month` did not appear within 30 seconds after the existing sidebar shortcut. Final frame shows the session without its sidebar. This occurs before the corrected header helper; no header click or glyph decision was reached |
+| Rendered tokens, no breakdown rows/warning, dollars in both views | NOT REACHED; RPC zero is supporting evidence, not rendered acceptance                                                                                                                                                                     |
+| Original durable open preference restoration                      | NOT APPLICABLE: no header preference was observed or changed; no header click occurred. No fresh collapsed-state claim                                                                                                                    |
+| Own ledger/import/request state                                   | PASS: rows and metadata empty; history source and admission absent; attempts 0, reserved USD 0; no model request                                                                                                                          |
+| Cleanup                                                           | PASS independently: owned job empty, no run-scoped process outside it, no late process or ledger/lifecycle/counter writes over 30 seconds. No shared service terminated                                                                   |
+
+Private evidence: `node_modules/.cache/cmon-auth/run-ebbde1bf618b4cab8a660749fd85323e/`, including `assertions.json`, `failure.json`, `worker.log`, `final.txt`, `final.raw`, `observer-ready.json`, `observer.json`, `job.json`, `cleanup.json` and `post-run-no-call.json`.
+
+**BLOCKED, not ready for a model call.** The single authorized retry failed before header interaction. Stop at this environment/readiness boundary; do not iterate native toggles or use the RPC zero as a substitute. No request-admission file or runnable inference command is supplied. A separate execution approval remains required after complete rendered readiness. Gap ID pending assignment; one test-only desired-state correction, zero production corrections; next action is review of the retained pre-header sidebar visibility evidence before authorizing any further run. This test delta is not docs-only. Worktree path `.worktree/toggle-token-display`, branch/change `toggle-token-display`, lifecycle owner test engineering: retained, landing/cleanup pending; next action resolve readiness, with process cleanup evidence above. No sync, archive, merge or release acceptance follows this checkpoint.
