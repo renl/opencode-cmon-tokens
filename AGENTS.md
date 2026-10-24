@@ -18,3 +18,4 @@ opencode V2-only plugin that records monthly cost and token usage in a local SQL
 - [Executable test coverage](openspec/changes/archive/2026-10-24-toggle-token-display/tasks.md)
 - [Code changes](docs/status_log.md)
 - [Verification procedures](docs/operations/README.md)
+- [Display implementation and specification review](https://github.com/renl/opencode-cmon-tokens/pull/1)
