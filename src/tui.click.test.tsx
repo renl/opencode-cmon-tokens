@@ -78,7 +78,9 @@ describe("sidebar tabs", () => {
     const rows = await frame();
     await t.mockMouse.click(col(rows, "Models"), 1);
     const after = await frame();
-    expect(after[1]!.trim()).toBe("View  Agents  [Models]  Providers");
+    expect(after[1]!.trim()).toMatch(
+      /^View {2}Agents {4}\[Models\] {2}Providers$/,
+    );
     expect(after.join("\n")).toContain("claude-sonnet-4-5");
     t.renderer.destroy();
   });
@@ -97,7 +99,9 @@ describe("sidebar tabs", () => {
     const rows = await frame();
     await t.mockMouse.click(col(rows, "Providers"), 1);
     const after = await frame();
-    expect(after[1]!.trim()).toBe("View  Agents  Models  [Providers]");
+    expect(after[1]!.trim()).toMatch(
+      /^View {2}Agents {4}Models {4}\[Providers\]$/,
+    );
     expect(after.join("\n")).toContain("anthropic");
     t.renderer.destroy();
   });
@@ -112,7 +116,9 @@ describe("sidebar tabs", () => {
     await t.mockMouse.click(38, 1);
     const after = await frame();
     expect(after[0]).toContain("▼");
-    expect(after[1]!.trim()).toBe("View  [Agents]  Models  Providers");
+    expect(after[1]!.trim()).toMatch(
+      /^View {2}\[Agents\] {2}Models {4}Providers$/,
+    );
     expect(saves).toEqual([]);
     t.renderer.destroy();
   });

@@ -7,6 +7,36 @@ import { buildSummary } from "./summary";
 import { parseCatalog } from "./pricing";
 
 describe("token summary public contract", () => {
+  test("TOK-19 compact presentation never rounds RPC counts or ranks equal formatted values by name", async () => {
+    const host = await server();
+    try {
+      const insert = host.db.query(`INSERT INTO cost_entry
+        (id,session_id,agent,provider_id,model_id,kind,cost_micros,
+        tokens_input,tokens_cache_read,tokens_cache_write,tokens_output,tokens_reasoning,created_at,source)
+        VALUES (?,'s',?,'p','m','step',?, ?,0,0,0,0,100,'live')`);
+      insert.run("high", "z-higher", 340_000, 1234);
+      insert.run("low", "a-lower", 12_000_000, 1233);
+      const before = host.db
+        .query("SELECT * FROM cost_entry ORDER BY id")
+        .all();
+      const result = await host.summary(100, 101);
+      expect(result.tokens?.totalTokens).toBe(2467);
+      expect(result.tokens?.agents).toEqual([
+        { agent: "z-higher", totalTokens: 1234, complete: true },
+        { agent: "a-lower", totalTokens: 1233, complete: true },
+      ]);
+      expect(result.agents).toEqual([
+        { agent: "a-lower", micros: 12_000_000 },
+        { agent: "z-higher", micros: 340_000 },
+      ]);
+      expect(result.totalMicros).toBe(12_340_000);
+      expect(
+        host.db.query("SELECT * FROM cost_entry ORDER BY id").all(),
+      ).toEqual(before);
+    } finally {
+      await host.close();
+    }
+  });
   test("TOK-13 missing prices never alter complete token projection", async () => {
     const host = await server();
     try {

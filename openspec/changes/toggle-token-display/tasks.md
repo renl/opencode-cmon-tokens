@@ -1,22 +1,90 @@
 # Toggle token display — executable work and evidence
 
-Let a user switch the existing monthly panel between exact tokens and unchanged dollars without losing the selected breakdown or collapsing it.
+Let a user read compact token amounts and switch intact controls in a narrow sidebar without changing counts, ranking or dollars.
 
 - Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
 - Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
 - Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
-- Current status: **implementation, independent in-process checks and disposable Linux clean-room checks GREEN; real-host e2e BLOCKED**. Architect **Boundary ACCEPT / decomposition ACCEPT**, corrections confirmed 2026-10-23 against `1a73b09` in [design review](design.md#architecture-review--2026-10-23). TOK-GAP-03 resolved; candidate `73f1f09` passes 342 tests on both recorded runtimes. Checkpoint 3 remains incomplete; no sync/archive/merge authorization.
+- Current status: **compact-format/container correction tests RED; setup complete pending scoped Architect boundary/decomposition review via CoS**. Earlier `73f1f09` Windows/Linux GREEN evidence remains historical, not proof of this correction. Real-host e2e remains BLOCKED; user-reported live operation after the `/dist` configuration correction is not independent first-use/provider acceptance. No sync/archive/merge authorization.
 
 ## Worktree lifecycle
 
-| Field            | Value                                                                                     |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`         |
-| branch / change  | `toggle-token-display` / `toggle-token-display`                                           |
-| owner            | SDET (lifecycle); SE is later implementation custodian                                    |
-| status           | implementation and Linux clean-room checks pass; real-host e2e blocked                    |
-| next action      | CoS routes supported-host lifecycle/RPC/model proof separately; no harness expansion here |
-| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state   |
+| Field            | Value                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`       |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                         |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                  |
+| status           | presentation correction RED tests saved; scoped review pending; real-host e2e blocked   |
+| next action      | CoS routes scoped Architect review, then bounded SE presentation correction             |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state |
+
+## Compact counts / actual-container correction — 2026-10-24
+
+This section supersedes older exact-count display/layout expectations below; prior accounting, storage and RPC obligations remain unchanged. Workflow: `software-change`, resumed SDET setup only. Delivery remains the same OpenSpec change/worktree/branch and single PR.
+
+### Freshness and preserved work
+
+- Resumed HEAD and fetched `origin/toggle-token-display`: `84553a4b554dd0eba1bc4e26f3e9e29d117252c8`, ahead/behind **0/0**; local/fetched `main`: `ae05f0b69bacb0547a49873e8efd27f286b40a96`. `git fetch --all --prune` completed; no remote-only/local-only commits. Code/test baseline `73f1f09` is present; subsequent committed changes through resume HEAD are docs/verification procedures only.
+- Existing dependencies were present: Bun `1.4.3` (runner `1.4.3-canary.1 bb35d1b81`), Node `v22.23.1`, locked core/Solid `0.5.14`, plugin `2.0.24`. No reinstall or dependency/lock edit needed.
+- Interrupted work already contained all five test changes listed below plus saved RED/layout-probe logs. Reused them; only tightened blank-cell/ancestor/selection assertions, explicitly excluded footer masking, formatted owned tests, and finished this task record. Earlier logs remain in ignored `node_modules/compact-{red,full-red}.log` and `layout-boundary.log`.
+- Read, preserved and did not rewrite/commit upstream dirty files: `README.md`, `proposal.md`, `specs/cost-display/spec.md`, `ux.md`, `design.md` (the latter four in this change). No production edits, install/config operations, live model calls, PR, merge or worktree cleanup.
+
+### Bounded executable checkpoint
+
+Founder-visible success: **Can I read compact monthly usage and click every complete choice at 45/40/22 sidebar cells, even inside a wider terminal, without changing accounting?**
+
+- **Proof of presentation:** production components rendered by the locked native renderer, sidebar inside a 120-cell terminal, frame/coordinate assertions, all six selections, panel-only resize, independent footer widths and actual selection drag. These directly test the reported readability/interaction defect under the adapter.
+- **Supporting proxies:** pure formatting and summary immutability/schema assertions; test-only renderer API probe. None proves real host slot geometry, RPC transport, reload lifetime, provider activity or a clean first-use workflow.
+
+Ordered work (all on this branch):
+
+- [x] C1 — preserve saved setup, cross-check installed layout source, establish RED contract tests and update this file. No production prerequisites missing.
+- [ ] C1 review — CoS obtains **scoped interface-fidelity and decomposition-fidelity review** of this correction block/tests before implementation; historical acceptance is not acceptance of the new layout boundary probe.
+- [ ] C2 — after C1 review, SE changes presentation in `src/tui.tsx` only unless a contract gap is returned via CoS. Compact decimal k/M/B, half-up rounding/promotion/trimmed zeroes, singular label; actual-container fit, separate View/Unit rows, stable reserved widths, atomic clickable text, intact amounts/name truncation or stacking per UX. No accounting, RPC, schemas, ranking, recording, tools, dependencies, config or unrelated refactor. SE does not edit authoritative tests. Private layout strategy is SE-owned; no requirement to use the probed callback.
+- [ ] C3 — after C2, SDET independently verifies the immutable implemented candidate in the existing controlled approach, revalidates affected evidence, and retains the separate real-host gate. No new general harness or host/model activity authorization is implied.
+
+SDET files/tests (all readable in this worktree):
+
+| Requirement / design mapping                                                                                             | Runnable test and deterministic expectation                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Delta “Token formatting and incomplete history are explicit”; design TUI formatting                                      | `src/token-format.test.ts` TOK-14: every integer below 1000; zero/one/NULL/absent, complete/partial; suffix boundaries, half-up, promotion at 999995 and 999995000, trimmed zeroes, B cap and large B. TOK-15: equal strings preserve exact values/order and dollar projection. Existing public formatting exports only, no invented helper API.                |
+| Delta “Narrow-sidebar controls remain readable” + clickable unit selection; design Container layout; UX width adaptation | `src/token-display.test.tsx` TOK-16: nested 45/40/22 panels in terminal 120, separate View/Unit rows, whole words/brackets at reserved coordinates, all six combinations, active/label/gap/reserved-cell no-ops, no ancestor action or RPC/durable write, panel resize without terminal resize. TOK-05: selection drag and nonselectable chrome at 80/45/40/22. |
+| Same layout requirement; compact partial/unavailable scenarios                                                           | TOK-17: ~1.58B header including collapsed/continuation and long-name right alignment/truncation for each breakdown; TOK-18: unavailable name/amount stacking at 22. TOK-08: intact larger-than-billion value, sidebar-only frames (no footer masking).                                                                                                          |
+| Delta unchanged-count/ranking/tool constraint; design exact RPC invariant                                                | `src/token-summary.test.ts` TOK-19: RPC 2467, ranked 1234 before 1233 despite names/equal formatted strings, unchanged dollar order/total and ledger. `token-display.test.tsx` TOK-21: visible equal compact strings retain raw order; footer one-line trailing clipping at its own 120/45/22 widths. Existing tools/accounting suites remain authoritative.    |
+| UX stable selected-width packing                                                                                         | `src/tui.click.test.tsx`: retain click/no-op/selection assertions, update three row-text expectations for reserved blank cells.                                                                                                                                                                                                                                 |
+| Source-check gate only, not feature proof                                                                                | `src/test-support/layout-boundary.test.tsx` TOK-20: test-only BoxRenderable ref/onSizeChange sees 45→22→40→45 parent widths while terminal stays 120. Production must not import/depend on this probe.                                                                                                                                                          |
+
+### Boundary Verification — scoped review required
+
+External renderer remains locked `@opentui/{core,solid}@0.5.14`; no endpoint/auth/URL/payload/name mapping changes. Existing storage/RPC boundaries above are unchanged. Source check performed against **installed locked files**, not guessed APIs:
+
+- Core `Renderable.d.ts:31,65,86`: `flexShrink?: number`, `width?: number | "auto" | percentage`, `onSizeChange?: (this: T) => void`; `BoxRenderable` supports these existing renderable options. Callback has no width argument; read measured `this.width` or retained ref.
+- Core `chunk-node-wp7ct2m6.js:708–709,1113–1131,1163–1165,1539–1558`: `width` returns measured `_widthValue`; layout stores new size before resize handling; visible resize invokes `this.onSizeChange?.()`; option is installed via setter. Hidden/zero-width/host padding behavior is not proved by this probe.
+- Solid `src/types/elements.d.ts:7–9,24–26,38–40`: typed `ref` plus BoxOptions; `index.js:425,644` onward assigns renderer properties and invokes refs. TOK-20 executes the exact ref and callback shape successfully. This provides a source-grounded optional strategy, not a mandated private implementation.
+- Current production `src/tui.tsx` uses `useTerminalDimensions()` for controlRows/headerFits/breakdownFits (lines 450–458/476/557 at resume); TOK-16 asserts dollar-only layout before token formatting, exposing the terminal-versus-container mistake independently. At nested widths current View is fragmented/missing and Tokens is unreachable. Do not “fix” by weakening the nested harness to terminal width.
+- Source check is sufficient to propose the test fixture; Architect must review boundary fidelity before SE relies on it. Intrinsic container-constrained layout remains permitted. Exceptional amounts wider than a dedicated line and keyboard/screen-reader behavior retain design limitations; no clipping/focus guarantee invented here.
+
+Decomposition trigger checklist: (1) new cross-unit inputs **NO**, existing summary/types already present; (2) clean-baseline contamination **NO**, run-isolated fixtures; (3) active receiver before event **YES**, retained TOK-09 ordering; (4) conclusion spans units **YES**, formatting/summary/renderer and later independent verification; (5) setup/proof split **YES**, C1/C2 precede C3. Therefore request scoped Architect review via CoS; do not reopen resolved historical accounting/source reviews or require real-host proof before C2. No new gap ID assigned in this dispatch.
+
+### Run sequence and resumed evidence
+
+PowerShell 7 / Windows x64; bounded native **in-process setup assertions**, not independent e2e. Use existing dependencies, canonical `bun run test` (timezone/browser conditions) and the child-only scratch variables from the canonical sequence below. No server/worker/watcher launched. Bounds: test/type/lint/format 120 seconds, build 180 seconds; logs in ignored `node_modules/`.
+
+After review, SE runs: adapter sanity → summary → pure compact → locked layout probe → rendered/click → full regressions → type/lint/build → scoped format/diff. Exact test commands: `bun run test ./src/test-support/token-host.test.ts`; `bun run test ./src/token-summary.test.ts`; `bun run test ./src/token-format.test.ts`; `bun run test ./src/test-support/layout-boundary.test.tsx`; `bun run test ./src/token-display.test.tsx ./src/tui.click.test.tsx`; `bun run test`; then `bunx --no-install tsc --noEmit`, `bun run lint`, `bun run build`. Every gate must exit 0 after implementation. Format command: `bunx --no-install prettier --check src/token-format.test.ts src/token-summary.test.ts src/token-display.test.tsx src/tui.click.test.tsx src/test-support/layout-boundary.test.tsx openspec/changes/toggle-token-display/tasks.md`; write formatting only to owned files. `git diff --check` must pass.
+
+| Resumed command / log                                        | Exit / assertion evidence                                                                                                                                                     |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Combined five affected test files → `compact-resume-red.log` | 1; **57 pass, 42 fail / 99 tests, 1284 assertions**. Expected formatting/atomic packing/ancestor/no-reachable-Tokens failures; no missing imports or guessed production APIs. |
+| Full `bun run test` → `compact-resume-full.log`              | 1; **339 pass, 42 fail / 381 tests, 1784 assertions**. Same 42 correction failures only; no unrelated accounting/tools/cleanup failure.                                       |
+| Summary alone → `compact-resume-summary.log`                 | 0; **40 pass, 133 assertions**; exact RPC/count/rank preservation already GREEN.                                                                                              |
+| Locked layout probe alone → `compact-resume-boundary.log`    | 0; **1 pass, 16 assertions**; source-check spike, not corrected production proof.                                                                                             |
+| Type/lint/build → `compact-resume-{types,lint,build}.log`    | 0 / 0 / 0. Initial lint found a test-authored two-space regex; changed to `{2}` and reran lint successfully. No production fix.                                               |
+
+Scoped six-file Prettier check (`node_modules/compact-resume-format.log`) and `git diff --check`: exit 0 / 0.
+
+Assertion status: deliberately **RED**, not implementation-ready until scoped review. Cleanup: renderer/adapter disposal reported no failure; zero `cmon-*` directories remain in owned scratch. Existing dependencies/logs/build retained, worktree retained. Only a lint-equivalent test regex and this evidence doc followed the recorded full run; no behavior/production changes.
+
+Freshness consequence: prior `73f1f09` accounting/RPC/runtime-source evidence remains historical and useful; changed presentation tests/criteria invalidate prior display/layout and overall candidate sign-off for this correction. Re-run affected checks on the implemented pinned candidate and controlled Linux harness (its existing pinned export must be updated by its owner to that candidate, not silently reuse `73f1f09`). Finalization must remain docs-only after successful independent verification, or affected revalidation is required. Existing unresolved live-host lifecycle/RPC/clean first-use/provider gates stay unresolved, not newly passed or newly required for implementation.
 
 ## Ordered checkpoints
 

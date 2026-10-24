@@ -68,19 +68,36 @@ function feed(initial = reply) {
   };
 }
 
-async function render(client: CostRpcClient, width = 80, state = storage()) {
+async function render(
+  client: CostRpcClient,
+  width = 80,
+  state = storage(),
+  panelWidth = width,
+) {
   const context = uiContext(client, state);
   const [sidebar, showSidebar] = createSignal(true);
   const [footer, showFooter] = createSignal(true);
+  const [containerWidth, resizePanel] = createSignal(panelWidth);
+  const [footerWidth, resizeFooter] = createSignal(width);
+  let ancestorClicks = 0;
   const t = await testRender(
     () => (
       <box>
-        <Show when={sidebar()}>
-          <CostSidebar context={context} />
-        </Show>
-        <Show when={footer()}>
-          <CostFooter context={context} />
-        </Show>
+        <box
+          id="test-sidebar-container"
+          width={containerWidth()}
+          flexShrink={0}
+          onMouseDown={() => ancestorClicks++}
+        >
+          <Show when={sidebar()}>
+            <CostSidebar context={context} />
+          </Show>
+        </box>
+        <box width={footerWidth()} flexShrink={0}>
+          <Show when={footer()}>
+            <CostFooter context={context} />
+          </Show>
+        </box>
       </box>
     ),
     { width, height: 30 },
@@ -98,11 +115,243 @@ async function render(client: CostRpcClient, width = 80, state = storage()) {
     return frame();
   };
   await frame();
-  return { t, frame, click, state, showSidebar, showFooter };
+  return {
+    t,
+    frame,
+    click,
+    state,
+    showSidebar,
+    showFooter,
+    resizePanel,
+    resizeFooter,
+    ancestorClicks: () => ancestorClicks,
+  };
 }
 
 describe("rendered unit selection", () => {
-  test("TOK-11 group-specific coverage and exact counts follow each breakdown", async () => {
+  test("TOK-21 footer compacts before one-line clipping at its own width; raw token order survives equal strings", async () => {
+    const ranked: TokenReply = {
+      ...reply,
+      tokens: {
+        totalTokens: 2467,
+        complete: true,
+        agents: [
+          { agent: "z-higher", totalTokens: 1234, complete: true },
+          { agent: "a-lower", totalTokens: 1233, complete: true },
+        ],
+        models: [],
+        providers: [],
+      },
+    };
+    const r = await render(feed(ranked).client, 120, storage(), 45);
+    try {
+      await r.click("Tokens");
+      const rows = await r.frame();
+      const z = rows.findIndex((row) => row.trimStart().startsWith("z-higher"));
+      const a = rows.findIndex((row) => row.trimStart().startsWith("a-lower"));
+      expect(z).toBeGreaterThan(0);
+      expect(a).toBe(z + 1);
+      expect(rows[z]).toContain("1.23k tokens");
+      expect(rows[a]).toContain("1.23k tokens");
+      expect(rows.join("\n")).not.toContain("Partial:");
+      r.showSidebar(false);
+      for (const size of [120, 45, 22]) {
+        r.resizeFooter(size);
+        const footer = (await r.frame()).filter((row) => row.trim() !== "");
+        expect(footer).toHaveLength(1);
+        expect(footer[0]!.trimEnd().length).toBeLessThanOrEqual(size);
+        expect(footer[0]).toContain("▼ 2.47k tokens");
+        if (size === 120)
+          expect(footer[0]).toContain(
+            "z-higher 1.23k tokens · a-lower 1.23k tokens",
+          );
+      }
+    } finally {
+      r.t.renderer.destroy();
+    }
+  });
+  test.each([45, 40, 22])(
+    "TOK-16 atomic controls at actual %i cells inside 120-cell terminal, six selections and resize",
+    async (width) => {
+      const f = feed();
+      const r = await render(f.client, 120, storage(), width);
+      // Sidebar-only frames ensure a readable footer cannot hide broken sidebar text.
+      r.showFooter(false);
+      const check = async (
+        size: number,
+        activeView: string,
+        activeUnit: string,
+      ) => {
+        const rows = await r.frame();
+        expect(r.t.renderer.width).toBe(120);
+        const container = r.t.renderer.root.findDescendantById(
+          "test-sidebar-container",
+        );
+        expect(container?.width).toBe(size);
+        const viewY = rows.findIndex((row) => row.includes("View"));
+        const unitY = rows.findIndex((row) => row.includes("Unit"));
+        expect(viewY, rows.slice(0, 12).join("\n")).toBeGreaterThan(0);
+        expect(unitY).toBe(viewY + (size === 22 ? 3 : 1));
+        const expected =
+          size === 22
+            ? ([
+                ["View", 0, 2],
+                ["Agents", 0, 8],
+                ["Models", 1, 2],
+                ["Providers", 2, 2],
+              ] as const)
+            : ([
+                ["View", 0, 2],
+                ["Agents", 0, 8],
+                ["Models", 0, 18],
+                ["Providers", 0, 28],
+              ] as const);
+        for (const [label, dy, x] of expected) {
+          const text = label === activeView ? `[${label}]` : label;
+          expect(
+            rows[viewY + dy]!.indexOf(text),
+            `${label} is atomic with stable reserved width`,
+          ).toBe(x);
+        }
+        for (const [label, x] of [
+          ["Unit", 2],
+          ["$", 8],
+          ["Tokens", 13],
+        ] as const) {
+          const text = label === activeUnit ? `[${label}]` : label;
+          expect(rows[unitY]!.indexOf(text)).toBe(x);
+        }
+        expect(rows.every((row) => row.trimEnd().length <= size)).toBe(true);
+        return rows;
+      };
+      try {
+        // Dollar-only check fails on old terminal-based packing independently of compact formatting.
+        await check(width, "Agents", "$");
+        const calls = f.calls();
+        for (const unit of ["$", "Tokens"]) {
+          await r.click(unit === "$" ? "[$]" : "Tokens");
+          for (const view of ["Agents", "Models", "Providers"]) {
+            await r.click(view);
+            const rows = await check(width, view, unit);
+            const expectedAmount = unit === "$" ? "~$12.34" : "1.23k tokens";
+            expect(rows[unit === "Tokens" && width === 22 ? 1 : 0]).toContain(
+              expectedAmount,
+            );
+            await r.click(`[${view}]`);
+            await r.click(`[${unit}]`);
+            await r.click("View");
+            await r.click("Unit");
+            const unitY = rows.findIndex((row) => row.includes("Unit"));
+            // Reserved unused choice cells and gaps are never targets.
+            for (const x of unit === "Tokens" ? [9, 10, 11] : [11, 19, 20])
+              await r.t.mockMouse.click(x, unitY);
+            await check(width, view, unit);
+            expect(r.state.view.open).toBe(true);
+          }
+        }
+        for (const resized of [22, 45, 40, width]) {
+          r.resizePanel(resized);
+          await check(resized, "Providers", "Tokens");
+        }
+        expect(f.calls()).toBe(calls);
+        expect(r.state.durableWrites).toEqual([]);
+        expect(r.ancestorClicks()).toBe(0);
+      } finally {
+        r.t.renderer.destroy();
+      }
+    },
+  );
+
+  test.each([45, 40, 22])(
+    "TOK-17 compact billion header, long names and partial amounts stay intact at %i cells",
+    async (width) => {
+      const name = "readable-but-extremely-long-breakdown-name";
+      const large: TokenReply = {
+        ...reply,
+        tokens: {
+          totalTokens: 1_578_717_226,
+          complete: false,
+          agents: [
+            { agent: name, totalTokens: 1_578_717_226, complete: false },
+          ],
+          models: [
+            { model: name, totalTokens: 1_578_717_226, complete: false },
+          ],
+          providers: [
+            { provider: name, totalTokens: 1_578_717_226, complete: false },
+          ],
+        },
+      };
+      const r = await render(feed(large).client, 120, storage(), width);
+      r.showFooter(false);
+      try {
+        await r.click("Tokens");
+        for (const view of ["Agents", "Models", "Providers"]) {
+          await r.click(view);
+          const rows = await r.frame();
+          if (width === 22) {
+            expect(rows[0]!.trimEnd()).toBe("▼ This month:");
+            expect(rows[1]!.trimEnd()).toBe("  ~1.58B tokens");
+          } else expect(rows[0]!.trimEnd()).toBe("▼ This month: ~1.58B tokens");
+          const dataY = rows.findIndex((row) =>
+            row.trimStart().startsWith("read"),
+          );
+          expect(dataY).toBeGreaterThan(
+            rows.findIndex((row) => row.includes("Unit")),
+          );
+          const data = rows[dataY]!;
+          expect(data).toContain("…");
+          expect(data).toMatch(/read.*… +~1\.58B tokens\s*$/);
+          expect(data.trimEnd().length).toBe(width); // amount right-aligned, name alone truncated
+          expect(rows.every((row) => row.trimEnd().length <= width)).toBe(true);
+        }
+        await r.t.mockMouse.click(0, 0);
+        const collapsed = await r.frame();
+        expect(collapsed.join("\n")).not.toContain("Unit");
+        expect(collapsed.some((row) => row.includes("~1.58B tokens"))).toBe(
+          true,
+        );
+      } finally {
+        r.t.renderer.destroy();
+      }
+    },
+  );
+
+  test("TOK-18 unavailable amounts stack below readable names when fewer than four name cells remain", async () => {
+    const missing: TokenReply = {
+      ...reply,
+      tokens: {
+        totalTokens: null,
+        complete: false,
+        agents: [
+          {
+            agent: "readable-long-agent-name",
+            totalTokens: null,
+            complete: false,
+          },
+        ],
+        models: [],
+        providers: [],
+      },
+    };
+    const r = await render(feed(missing).client, 120, storage(), 22);
+    r.showFooter(false);
+    try {
+      await r.click("Tokens");
+      const rows = await r.frame();
+      const y = rows.findIndex((row) => row.trimStart().startsWith("readable"));
+      expect(y).toBeGreaterThan(0);
+      expect(rows[y]!.trimEnd()).toMatch(/^ {2}readable.*…$/);
+      expect(rows[y + 1]!.trimEnd()).toBe("  Tokens unavailable");
+      expect(rows[0]!.trimEnd()).toBe("▼ This month:");
+      expect(rows[1]!.trimEnd()).toBe("  Tokens unavailable");
+      expect(rows.every((row) => row.trimEnd().length <= 22)).toBe(true);
+    } finally {
+      r.t.renderer.destroy();
+    }
+  });
+
+  test("TOK-11 group-specific coverage and compact counts follow each breakdown", async () => {
     const mixed: TokenReply = {
       ...reply,
       tokens: {
@@ -122,19 +371,19 @@ describe("rendered unit selection", () => {
     const r = await render(feed(mixed).client, 100);
     try {
       const rows = await r.click("Tokens");
-      expect(rows[0]).toContain("~1,235 tokens");
+      expect(rows[0]).toContain("~1.24k tokens");
       expect(
         rows.find((row) => row.trimStart().startsWith("complete")),
-      ).toMatch(/[^~]1,234 tokens/);
+      ).toMatch(/[^~]1\.23k tokens/);
       expect(
         rows.find((row) => row.trimStart().startsWith("partial")),
-      ).toContain("~1 tokens");
+      ).toContain("~1 token");
       expect(
         rows.find((row) => row.trimStart().startsWith("missing")),
       ).toContain("Tokens unavailable");
-      expect((await r.click("Models")).join("\n")).toContain("~1,235 tokens");
+      expect((await r.click("Models")).join("\n")).toContain("~1.24k tokens");
       expect((await r.click("Providers")).join("\n")).toContain("provider");
-      expect((await r.frame()).join("\n")).not.toContain("~1,234 tokens");
+      expect((await r.frame()).join("\n")).not.toContain("~1.23k tokens");
     } finally {
       r.t.renderer.destroy();
     }
@@ -148,9 +397,9 @@ describe("rendered unit selection", () => {
       const tokens = (await r.click("Tokens")).join("\n");
       expect(tokens).toContain("[Tokens]");
       expect(tokens).toContain("[Models]");
-      expect(tokens).toContain("1,234 tokens");
+      expect(tokens).toContain("1.23k tokens");
       expect(tokens).not.toContain("Partial:");
-      expect(tokens).toContain("busy 1,000 tokens");
+      expect(tokens).toContain("busy 1k tokens");
       expect(tokens).toContain("third 234 tokens");
       expect(tokens).toContain("+1");
       expect(tokens).not.toContain("expensive 0 tokens"); // footer top two, sidebar Models
@@ -174,32 +423,37 @@ describe("rendered unit selection", () => {
     }
   });
 
-  test("TOK-05 active, label, gap clicks and drag do not change unit or collapse", async () => {
-    const r = await render(feed().client);
-    try {
-      await r.click("Tokens");
-      for (const text of ["[Tokens]", "Unit", "View"]) await r.click(text);
-      const rows = await r.frame();
-      const y = rows.findIndex((row) => row.includes("Unit"));
-      await r.t.mockMouse.click(rows[y]!.indexOf("Unit") + 4, y);
-      expect((await r.frame()).join("\n")).toContain("[Tokens]");
-      expect(r.state.view.open).toBe(true);
-      const dataY = (await r.frame()).findIndex(
-        (row) =>
-          row.includes("busy") &&
-          !row.includes("this month") &&
-          !row.includes("+1"),
-      );
-      await r.t.mockMouse.drag(8, dataY, 0, 0);
-      await r.frame();
-      const selected = r.t.renderer.getSelection()?.getSelectedText() ?? "";
-      expect(selected).toContain("busy");
-      expect(selected).not.toMatch(/Unit|Tokens\]|View|This month/);
-      expect(r.state.durableWrites).toEqual([]);
-    } finally {
-      r.t.renderer.destroy();
-    }
-  });
+  test.each([80, 45, 40, 22])(
+    "TOK-05 active, label, gap clicks and drag at %i cells do not change unit or collapse",
+    async (width) => {
+      const r = await render(feed().client, 120, storage(), width);
+      try {
+        await r.click("Tokens");
+        for (const text of ["[Tokens]", "Unit", "View"]) await r.click(text);
+        const rows = await r.frame();
+        const y = rows.findIndex((row) => row.includes("Unit"));
+        await r.t.mockMouse.click(rows[y]!.indexOf("Unit") + 4, y);
+        expect((await r.frame()).join("\n")).toContain("[Tokens]");
+        expect(r.state.view.open).toBe(true);
+        expect(r.ancestorClicks()).toBe(0);
+        const dataY = (await r.frame()).findIndex(
+          (row) =>
+            row.includes("busy") &&
+            !row.includes("this month") &&
+            !row.includes("+1"),
+        );
+        await r.t.mockMouse.drag(8, dataY, 0, 0);
+        await r.frame();
+        const selected = r.t.renderer.getSelection()?.getSelectedText() ?? "";
+        expect(selected).toContain("busy");
+        expect(selected).not.toMatch(/Unit|Tokens\]|View|This month/);
+        expect((await r.frame()).join("\n")).toContain("[Tokens]");
+        expect(r.state.durableWrites).toEqual([]);
+      } finally {
+        r.t.renderer.destroy();
+      }
+    },
+  );
 
   test("TOK-06 refresh/error/collapse and independent slot remount retain shared unit; restart resets", async () => {
     const f = feed();
@@ -210,15 +464,15 @@ describe("rendered unit selection", () => {
       r.showFooter(false);
       await r.frame();
       r.showFooter(true);
-      expect((await r.frame()).join("\n")).toContain("busy 1,000 tokens");
+      expect((await r.frame()).join("\n")).toContain("busy 1k tokens");
       r.showSidebar(false);
       await r.frame();
-      expect((await r.frame()).join("\n")).toContain("1,234 tokens");
+      expect((await r.frame()).join("\n")).toContain("1.23k tokens");
       r.showSidebar(true);
       expect((await r.frame()).join("\n")).toContain("[Tokens]");
       await r.t.mockMouse.click(0, 0);
       expect((await r.frame()).join("\n")).not.toContain("Unit");
-      expect((await r.frame()).join("\n")).toContain("1,234 tokens this month");
+      expect((await r.frame()).join("\n")).toContain("1.23k tokens this month");
       await r.t.mockMouse.click(0, 0);
       f.refresh(reply, true);
       const failed = (await r.frame()).join("\n");
@@ -334,8 +588,8 @@ describe("rendered unit selection", () => {
     }
   });
 
-  test.each([40, 22])(
-    "TOK-08 exact values and reachable controls at %i columns",
+  test.each([45, 40, 22])(
+    "TOK-08 intact compact values and reachable controls in %i-cell panel / 120-cell terminal",
     async (width) => {
       const large: TokenReply = {
         ...reply,
@@ -349,12 +603,18 @@ describe("rendered unit selection", () => {
           providers: [],
         },
       };
-      const r = await render(feed(large).client, width);
+      const r = await render(feed(large).client, 120, storage(), width);
+      r.showFooter(false);
       try {
         await r.click("Tokens");
-        // Footer may clip; sidebar may wrap but never discard count characters.
-        const text = (await r.frame()).join("").replace(/\s/g, "");
-        expect(text).toContain("~1,234,567,890,123tokens");
+        // Assert a whole amount on a sidebar line, not concatenated fragments or footer text.
+        const sidebar = await r.frame();
+        expect(sidebar.some((row) => row.includes("~1234.57B tokens"))).toBe(
+          true,
+        );
+        expect(sidebar.every((row) => row.trimEnd().length <= width)).toBe(
+          true,
+        );
         await r.click("Providers");
         expect((await r.frame()).join("\n")).toContain("[Providers]");
       } finally {
