@@ -14,7 +14,8 @@ class Safety(unittest.TestCase):
         source = (driver.ROOT / "docs/operations/authenticated-candidate.mjs").read_text(encoding="utf-8")
         hook = source.split('await hook("http.request", event => {', 1)[1].split('\n    });', 1)[0]
         script = r'''
-let state={attempts:0,reservedUSD:0}, receipts=[];
+let state={attempts:0,reservedUSD:0,maxRequests:LIMIT}, receipts=[];
+const maxRequests=LIMIT;
 const statePath="unused", model=e=>{if(e.sessionID!=="ses_test" || e.model.providerID!=="deepseek" || e.model.id!=="deepseek-flash")throw Error("selection");};
 const record=(event,extra)=>receipts.push({event,...extra});
 const fs={readFileSync:()=>JSON.stringify(state),writeFileSync:(_,s)=>{state=JSON.parse(s)}};
@@ -33,19 +34,40 @@ for(const [url,method] of [
  ["https://api.deepseek.com/chat/completions","GET"]])rejected(event(url,method));
 if(receipts.length!==9 || receipts.some(r=>r.event!=="http-rejected" || Object.keys(r).sort().join()!=="event,method,origin,path,queryPresent") || JSON.stringify(receipts).includes("never-log"))throw Error("sanitized receipts");
 for(const patch of [{sessionID:"ses_other"},{kind:"auxiliary"},{model:{providerID:"other",id:"deepseek-flash"}}])rejected({...event(),...patch});
-for(let i=1;i<=3;i++){
+for(let i=1;i<=maxRequests;i++){
  const e=event();guard(e);
  if(state.attempts!==i||state.reservedUSD!==i*.01||e.request.redirect!=="error")throw Error("reservation");
  const body=await e.request.json();
  if(body.model!=="deepseek-flash"||body.max_tokens!==256||body.thinking.type!=="disabled"||body.messages.length!==1||body.messages[0].content!=="Reply OK."||body.tools)throw Error("body");
 }
 rejected(event());
-for(const invalid of [{attempts:-1,reservedUSD:0},{attempts:1.5,reservedUSD:.015},{attempts:1,reservedUSD:.0006072}]){state=invalid;rejected(event());}
+for(const invalid of [{attempts:-1,reservedUSD:0},{attempts:1.5,reservedUSD:.015},{attempts:1,reservedUSD:.0006072},{attempts:0,reservedUSD:0,maxRequests:"1"},{attempts:0,reservedUSD:0,maxRequests:0}]){state=invalid;rejected(event());}
 console.log("PASS: exact endpoint; 9 sanitized rejections; 3 reservations; fourth blocked; zero dispatch");
 '''.replace("HOOK", hook)
-        result = driver.subprocess.run(["bun", "-e", script], cwd=driver.ROOT,
-                                       capture_output=True, text=True, timeout=15)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        for limit in (1,3):
+            result = driver.subprocess.run(["bun", "-e", script.replace("LIMIT",str(limit))], cwd=driver.ROOT,
+                                           capture_output=True, text=True, timeout=15)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_malformed_configured_guard_limit_fails_closed(self):
+        source=(driver.ROOT / "docs/operations/authenticated-candidate.mjs").read_text(encoding="utf-8")
+        block=source.split('    const configuredLimit =',1)[1].split('    if (path.resolve',1)[0]
+        script='''const validate=(value,manifestValue)=>{const ctx={options:{maxRequests:value}},manifest={maxRequests:manifestValue}; const configuredLimit =BLOCK;return maxRequests;};
+for(const value of [0,4,-1,1.5,"1",null,true,NaN,Infinity]){let threw=false;try{validate(value,value)}catch{threw=true}if(!threw)throw Error("malformed accepted");}
+if(validate(1,1)!==1)throw Error("one rejected");
+let threw=false;try{validate(1,3)}catch{threw=true}if(!threw)throw Error("mismatch accepted");
+'''.replace("BLOCK",block)
+        result=driver.subprocess.run(["bun","-e",script],cwd=driver.ROOT,capture_output=True,text=True,timeout=15)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_single_dispatch_preparation_and_refresh_view(self):
+        import inspect
+        source=Path(driver.__file__).read_text(encoding="utf-8")
+        self.assertIn('"-MaxRequests","1"',source)
+        first=inspect.getsource(driver.first_use)
+        self.assertLess(first.index('terminal.click("Tokens")'),first.index('write(run / "armed-session.json"'))
+        self.assertNotIn('terminal.click("Tokens")',first.split('write(run / "armed-session.json"',1)[1])
+        self.assertIn('ctx.client.message.list({sessionID:session.id,type:"assistant",limit:10})',driver.OBSERVER)
 
     def test_no_shared_service_api_path(self):
         source = Path(driver.__file__).read_text(encoding="utf-8")

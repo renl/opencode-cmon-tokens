@@ -8,6 +8,31 @@ References: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md
 
 ### Bounded provider first-use acceptance
 
+#### Final affected verification — PASS
+
+**Assertions PASS (30); cleanup PASS independently.** One fresh execution of `python -B src/test-support/authenticated-terminal.py --first-use` completed against unchanged application `9a55b54b0db1ea9546811aed55da1a54c95baf89`, built from its immutable export. The existing 383 controlled tests and 75 credential-free host checks are reused, not rerun. Eighteen pure harness tests pass, including actual HTTP-hook execution with limit 1 rejecting the second send, malformed configured/persisted limits, endpoint rejection and no-dispatch checks.
+
+The explicitly accepted native exception is Windows OpenCode 2.1.4, private standalone runtime, existing opaque authentication, empty isolated ledger and absent import source. It proves clean ledger first use, **not** new authentication onboarding or an entirely empty global installation. The finite harness owns startup/readiness, a 300-second Job Object lifecycle, bounded UI waits, termination and a 30-second stability check; the outer command is bounded to 480 seconds. Preparation receives `-MaxRequests 1`; manifest, plugin options and persisted counter agree before admission. Prior evidence and reservations remain retained; a new run does not renew the cumulative allowance.
+
+| Gate                 | Result                                                                                                                                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Before admission     | PASS: candidate/build/lock provenance, private inventory/location, General/Flash selection, containment, absent import/admission, empty ledger/meta and complete zero real RPC                                            |
+| Rendered empty state | PASS: unique exact `0 tokens`, no candidate dollar rows or partial warning; all empty breakdowns and home footer; dollars also shown in both slots                                                                        |
+| Normal refresh       | PASS: Tokens selected immediately before the single prompt; sidebar changes from `This month: 0 tokens` to `This month: 9 tokens` without a post-prompt unit switch                                                       |
+| Completed workflow   | PASS: public `message.list` returns one assistant turn with `finish: stop`, text `OK.`, General and `deepseek/deepseek-flash`; punctuation is not an assertion. Actual terminal labels the model DeepSeek V4.1 Flash 1017 |
+| Recorded counts      | PASS: one successful live row; input 7, output 2, reasoning/cache read/cache write 0. Completed message counts, ledger sum, complete real RPC revision 1 and rendered sidebar/footer all equal 9 tokens                   |
+| Dollar view          | PASS: stored/RPC cost 2 microdollars (USD 0.000002), rendered `$0.00` in both slots; completed-message unrounded cost USD 0.00000225. This is recorded runtime cost, not an independent provider invoice                  |
+| Switch invariance    | PASS: settled exact rows, metadata, revision, dollar summary and request state unchanged after UI unit clicks                                                                                                             |
+| Physical dispatch    | PASS: exactly one primary Flash request, USD 0.01 reserved, no auxiliary or retry dispatch. Cumulative with the retained prior call: 2 requests of 3, USD 0.02 reserved below USD 0.05, stored costs USD 0.000004         |
+| Restoration          | PASS: original Agents breakdown, collapsed panel, hidden sidebar and dollar unit restored; admission removed                                                                                                              |
+| Cleanup              | PASS: actual terminal and observer host contained; owned job empty and no matching external process or late ledger/counter/lifecycle write for 30 seconds. Shared service and existing accounting were not rolled back    |
+
+Retained evidence bundle identifier: `run-b8e92ba88875437e82a33ba99d246b3a`. Key artifacts: `ready.json` (executed driver SHA-256 `19a880cd0faa748aa9fc9cfd203909ecdddf60106ac744bdf8073f948118cc63`, adapter SHA-256 `0e45eba7edb36dae68d8f40a487741978d5aee9259b2b3f40eb71c98a5b744c1`), `assertions.json`, `first-use.json`, `assistant-completed.json`, `immediately-before-prompt-tokens.txt`, `activity-{sidebar,footer}-tokens.txt`, `restored-{sidebar,footer}-dollars.txt`, `job.json`, restoration receipts and `cleanup.json`. Earlier failed evidence remains historical, not overwritten. No third call ran.
+
+The affected live gate now passes under the accepted authentication variant; no application hotfix is needed. After this run only this evidence/task document changed within the verification scope; executed tests/harness, application, dependencies and build inputs remain unchanged. Other existing architecture/operations edits are outside this result and must retain their own provenance. Finalization must confirm its remaining delta is docs-only or revalidate affected non-doc changes. No sync, archive, merge, deployment or release execution occurred.
+
+Worktree `.worktree/toggle-token-display`, branch/change `toggle-token-display`, owner test engineering, status verification passed under the accepted variant; next action complete separately owned finalization on the single change branch. Worktree cleanup pending verified landing; disposable process cleanup passed. Earlier matcher gap resolved by the affected run; no gap identifier assigned.
+
 #### Corrected endpoint execution
 
 Latest result: **assertions FAIL; owned-process and sustained cleanup PASS**. Exactly one corrected fresh-ledger invocation ran on unchanged application `9a55b54b0db1ea9546811aed55da1a54c95baf89`, Windows host 2.1.4, under the approved same-authentication/isolated-data exception. Existing 383 controlled tests and 75 credential-free host checks are retained. No feature-verification or release-ready claim follows.
@@ -92,7 +117,7 @@ Gap ID pending assignment; startup correction attempts: one test-only correction
 - [x] Close test-owned SQLite readers before fixture removal. Loading uses U+2026 (`…`).
 - [x] Complete controlled clean-room regression, type, lint, build and formatting checks.
 - [x] Verify actual OpenCode slot geometry, shared-memory reload/restart lifecycle and RPC compatibility in a supported host.
-- [ ] Verify clean first use with normal provider activity from an isolated empty installation, including both unit views and unchanged accounting after switching.
+- [x] Verify clean first use with normal provider activity, both unit views and unchanged accounting after switching, under the explicitly accepted existing-authentication / empty-isolated-ledger variant above (not new authentication onboarding).
 
 Production areas: `src/{types,store,summary,rpc,index}.ts` and `src/tui.tsx`. Recording, repair, retention, monetary semantics, ranking, tool output, dependencies and configuration remain unchanged by the token presentation feature.
 

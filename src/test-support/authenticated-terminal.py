@@ -118,7 +118,12 @@ export default Plugin.define({id:"cmon-first-use-observer",async setup(ctx){
         await ctx.client.session.prompt({sessionID:session.id,text:"Reply OK."});
         fs.writeFileSync(root+"/submitted.json",JSON.stringify({sessionID:session.id,at:Date.now()}));
       }
-     const reply=await ctx.client.rpc(CostRpc).summary(interval);
+      if(submitted){
+        const messages=await ctx.client.message.list({sessionID:session.id,type:"assistant",limit:10});
+        const completed=messages.data.filter(m=>m.type==="assistant" && m.finish==="stop");
+        if(completed.length)fs.writeFileSync(root+"/assistant-completed.json",JSON.stringify(completed));
+      }
+      const reply=await ctx.client.rpc(CostRpc).summary(interval);
      const route=ctx.ui.router.current();
      const sidebarVisible=route.type==="session"?sidebar():null;
      if(originalSidebar===undefined && sidebarVisible!==null)originalSidebar=sidebarVisible;
@@ -221,7 +226,7 @@ class Terminal:
             self.pump()
             if (self.run / "observer-error.txt").exists():
                 raise AssertionError("Observer submission/RPC error")
-            if assistant_confirmed(self.text()):
+            if (self.run / "assistant-completed.json").exists():
                 return
             assert self.process.isalive(), "TUI exited before assistant confirmation"
         raise AssertionError("Rendered assistant confirmation deadline; no retry")
@@ -348,6 +353,11 @@ def first_use(run, terminal, session, observer, check):
           and price["outputPerMillion"]==1.2 and price["maxOutput"]==256 and 3*0.01<0.05)
     terminal.send("\x1b[17~")
     terminal.wait("[$]")
+    terminal.click("Tokens")
+    terminal.wait("[Tokens]")
+    terminal.wait("This month: 0 tokens")
+    terminal.frame("immediately-before-prompt-tokens")
+    check("single physical dispatch limit persisted before admission", request_state(run, 0))
     # Admission only after all empty-state/readiness checks in this SAME process.
     write(run / "armed-session.json", {"sessionID":session,"expires":int(time.time()*1000)+120000})
     write(run / "submit-once.json", {"sessionID":session})
@@ -370,7 +380,9 @@ def first_use(run, terminal, session, observer, check):
     else:
         raise AssertionError("Normal recording/settled RPC deadline")
     rows=snapshot["rows"]
-    check("rendered assistant confirms harmless workflow", assistant_confirmed(terminal.text()))
+    completed=load(run / "assistant-completed.json")
+    check("public message list confirms completed assistant turn", bool(completed) and all(
+          m["type"]=="assistant" and m["finish"]=="stop" for m in completed))
     check("normal live recording only admitted successful General Flash rows", all(
         row["source"]=="live" and row["session_id"]==session and row["agent"]=="general" and
         row["provider_id"]=="deepseek" and row["model_id"]=="deepseek-flash" and row["failed"]==0 for row in rows))
@@ -382,15 +394,13 @@ def first_use(run, terminal, session, observer, check):
     requests=load(run / "requests.json")
     events=[json.loads(line) for line in (run / "lifecycle.jsonl").read_text(encoding="utf-8").splitlines()]
     attempts=[event for event in events if event["event"]=="http-attempt"]
-    check("transport request ceiling includes all admitted physical sends", 1<=requests["attempts"]<=3 and
+    check("transport request ceiling includes all admitted physical sends", requests["attempts"]==1 and requests["maxRequests"]==1 and
           len(attempts)==requests["attempts"] and requests["reservedUSD"]==requests["attempts"]*0.01 and
           all(e["providerID"]=="deepseek" and e["modelID"]=="deepseek-flash" and e["kind"]=="primary" for e in attempts))
     cost=sum(row["cost_micros"] for row in rows)/1000000
     check("real RPC dollars equal stored monetary total", reply["totalMicros"]==sum(row["cost_micros"] for row in rows))
     check("recorded cost within reservations and approved budget", 0<=cost<=requests["reservedUSD"]<0.05)
     dollar_before={key:reply[key] for key in ("revision","totalMicros","complete","agents","models","providers")}
-    terminal.frame("activity-sidebar-dollars")
-    terminal.click("Tokens")
     expected=compact_tokens(total,complete)
     terminal.wait("This month: "+expected)
     check("sidebar exact compact total and honest coverage", ("Partial:" in terminal.text())== (not complete))
@@ -436,7 +446,7 @@ def worker(run, allow_first_use=False):
         check("candidate build and dependency provenance", all(digest(run / "candidate" / p)==h for p,h in HASHES.items()))
         check("fresh run unarmed with no import source", not (run / "armed-session.json").exists()
               and not (run / "absent-source.sqlite").exists())
-        check("zero request reservations", load(run / "requests.json")=={"attempts":0,"reservedUSD":0})
+        check("zero request reservations and persisted single dispatch limit", request_state(run, 0))
         config = load(run / "project/opencode.json")
         check("supplied General route selects DeepSeek Flash", config["default_agent"]=="general"
               and config["model"]=="deepseek/deepseek-flash" and config["warming"] is False)
@@ -499,7 +509,7 @@ def worker(run, allow_first_use=False):
         terminal.frame("empty-footer-dollars")
         check("empty ledger and import metadata and counters preserved by UI",ledger(run)=={"rows":[],"meta":[]} and
               not (run / "absent-source.sqlite").exists() and
-              load(run / "requests.json")=={"attempts":0,"reservedUSD":0} and not (run / "armed-session.json").exists())
+               request_state(run, 0) and not (run / "armed-session.json").exists())
         write(run / "empty-render-verified.json",{"candidate":REVISION,"sessionID":session,"checks":checks})
         if allow_first_use:
             first_use(run,terminal,session,observer,check)
@@ -552,6 +562,14 @@ def worker(run, allow_first_use=False):
         # Outer job teardown owns all private processes; never call shared API.
 
 
+def request_state(run, attempts):
+    state=load(run / "requests.json")
+    manifest=load(run / "environment.json")
+    return (type(state.get("maxRequests")) is int and state["maxRequests"]==1 and
+            type(manifest.get("maxRequests")) is int and manifest["maxRequests"]==1 and
+            state=={"attempts":attempts,"reservedUSD":attempts*0.01,"maxRequests":1})
+
+
 def exact_zero_tokens(text):
     return (bool(re.search(r"(?<![\d,.])0 tokens\b", text)) and
              not re.search(r"\$\s*\d", text) and "Partial:" not in text)
@@ -586,7 +604,7 @@ def cleanup(run):
         time.sleep(30)
         assert outside()==[] and stamp()==before, "late run process/write"
         requests=load(run / "requests.json")
-        assert 0<=requests["attempts"]<=3 and requests["reservedUSD"]==requests["attempts"]*0.01, "Bounded reservations"
+        assert requests["attempts"] in (0,1) and request_state(run,requests["attempts"]), "Single dispatch reservations"
         result={"status":"PASS","sustainedSeconds":30,"scratchFiles":before,
                  "normalData":"no direct edits/deletions by harness; ordinary host appends preserved, not rolled back"}
     finally:
@@ -606,7 +624,7 @@ def main():
         worker(run,args.first_use)
         return
     assert not args.run, "Fresh preparation is mandatory"
-    run=Path(execute(["pwsh","-NoProfile","-NonInteractive","-File","docs/operations/prepare-authenticated.ps1"],timeout=30).strip()).resolve()
+    run=Path(execute(["pwsh","-NoProfile","-NonInteractive","-File","docs/operations/prepare-authenticated.ps1","-MaxRequests","1"],timeout=30).strip()).resolve()
     assert run.is_relative_to(ROOT / "node_modules/.cache/cmon-auth")
     print("Evidence:",run,flush=True)
     if args.first_use:
