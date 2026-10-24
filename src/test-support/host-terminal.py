@@ -25,7 +25,7 @@ RESULTS = []
 # Test-only observer: uses pinned public client/router/keymap/renderer contracts.
 # Does not register a server endpoint, seed accounting, or replace any UI slot.
 OBSERVER = r'''
-import { Plugin } from "/opt/candidate/node_modules/@opencode/plugin/dist/tui/index.js";
+import { Plugin } from "@opencode/plugin/tui";
 import { CostRpc } from "/opt/candidate/dist/rpc.js";
 import fs from "node:fs";
 export default Plugin.define({id:"cmon-acceptance-observer",setup(ctx) {
