@@ -2,7 +2,7 @@
 
 ## Why
 
-The sidebar total dropped from about $348.72 to $174.68 for October. The cache-write add-on is applied only when the catalog tier prices cache writes at zero. In the sidebar's process the catalog reports a non-zero cache-write price, so about $172 of Claude cache-write cost vanished from the total. The recorded rows still exclude cache writes (e.g. a step with 123,430 micro-USD of cache writes was recorded at 1,238 micro-USD), so the catalog price is the wrong signal.
+The cache-write add-on is applied only when the catalog tier prices cache writes at zero. If the catalog reports a non-zero cache-write price while recorded rows still exclude cache writes, the sidebar omits that cost. The catalog price alone is therefore the wrong signal.
 
 ## What Changes
 

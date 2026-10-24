@@ -2,11 +2,9 @@
 
 Define panel behavior for retaining dollars alongside a token view.
 
-- **Status:** Accepted product scope, including user-authorized compact-formatting and narrow-sidebar readability correction; PM is primary author.
 - **Parent:** [Proposal and direction check](../../proposal.md).
 - **Covered outcomes:** Unit selection, comparable breakdowns, honest token coverage, compact amounts and readable narrow controls.
-- **Decision needed:** None; no additional user sign-off. Existing source-grounded counting obligations remain unchanged.
-- **Read next:** Architect's subsequent contract; no wire format is prescribed here.
+- **Read next:** [Design contract](../../design.md); no wire format is prescribed here.
 
 ## MODIFIED Requirements
 
@@ -108,7 +106,7 @@ The opened, ready sidebar SHALL offer separate clickable `$` and `Tokens` choice
 
 ### Requirement: Narrow-sidebar controls remain readable
 
-At an available sidebar content width of 45 character cells, the opened, ready panel SHALL keep every unit and breakdown choice readable, identifiable and clickable in both dollar and token modes. Control labels and individual choices SHALL NOT break midword, overlap or interleave with other controls. Selected-state brackets SHALL stay with their choice. Breakdown names and amounts SHALL remain visually distinct without overlap; each amount SHALL remain intact. UX SHALL determine the exact layout and treatment of long names, rather than preserving a layout that fragments labels.
+At an available sidebar content width of 45 character cells, the opened, ready panel SHALL keep every unit and breakdown choice readable, identifiable and clickable in both dollar and token modes. Control labels and individual choices SHALL NOT break midword, overlap or interleave with other controls. Selected-state brackets SHALL stay with their choice. Breakdown names and amounts SHALL remain visually distinct without overlap; each amount SHALL remain intact. The [UI specification](../../ux.md) defines the exact layout and treatment of long names, rather than preserving a layout that fragments labels.
 
 #### Scenario: Readable controls and amounts in a narrow sidebar
 
@@ -134,7 +132,7 @@ The unit SHALL default to dollars on every TUI restart, without altering persist
 
 ### Requirement: Token mode measures usage without double counting
 
-Tokens SHALL represent recorded prompt usage, including cached prompt usage, plus generated usage, including reasoning, with overlapping categories counted only once. Counts SHALL NOT be inferred from prices or dollar amounts. The Architect SHALL establish the field-level formula from supported source evidence before implementation; this requirement does not assume cache categories or reasoning are additive to input or output.
+Tokens SHALL represent recorded prompt usage, including cached prompt usage, plus generated usage, including reasoning, with overlapping categories counted only once. Counts SHALL NOT be inferred from prices or dollar amounts. The field-level formula SHALL be grounded in supported source evidence; this requirement does not assume cache categories or reasoning are additive to input or output.
 
 The token view SHALL cover the same monthly rows and attribution as the dollar view, including recorded sub-agent, failed-step and compaction usage. Each agent/model/provider grouping SHALL sum the same known usage, with each grouping's amounts summing to the known monthly total. Models SHALL retain existing merging across providers. Each breakdown SHALL sort by token amount descending, then name, independently of dollar order. Existing cost-labelled breakdown behavior SHALL apply to dollars; in token mode the same breakdown controls SHALL show token amounts and ordering instead.
 
@@ -222,5 +220,5 @@ On a clean installation with no recorded or imported history, the existing suppo
 
 ## Related Artifacts
 
-- [Proposal, authority and source-evidence handoff](../../proposal.md)
+- [Proposal and technical dependencies](../../proposal.md)
 - [Current cost-display specification](../../../../specs/cost-display/spec.md)

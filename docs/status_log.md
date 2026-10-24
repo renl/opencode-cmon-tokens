@@ -1,40 +1,22 @@
-# Status log
+# Code changes
 
-## 2026-10-23 — Dollar/token panel toggle
+## Dollar and token display
 
-- User approved a clickable `$` / `Tokens` switch for the onscreen total and breakdowns, retaining dollar mode and leaving reporting tools unchanged.
-- SDET verified clean target `main` at `ae05f0b69bacb0547a49873e8efd27f286b40a96` and created branch/worktree `toggle-token-display` under `.worktree/`; SDET retains lifecycle ownership.
-- PM authored change proposal/product delta; UX authored change-local interaction specification. Product direction validated against user confirmation.
-- Defaults: dollars on session start; selection shared by sidebar/footer during session. Existing history remains intact; missing token counts are identified rather than guessed.
-- Next: establish source-backed token formula, author architecture, then SDET tests and SE implementation. No feature verification claimed.
+- Clickable `$` and `Tokens` controls switch the monthly total and agent, model and provider breakdowns.
+- Dollars are the default; the selected unit is shared by the sidebar and footer for the current session.
+- Token totals include input, output, reasoning, cached reads and cached writes without double counting.
+- Compact decimal suffixes `k`, `M` and `B` use up to two fractional digits; exact counts and sorting remain unchanged internally.
+- Partial token coverage is marked explicitly; unavailable counts are not presented as zero.
 
-## 2026-10-24 — Implemented; live-host verification pending
+## Responsive panel
 
-- Architecture confirmed all five recorded token components are disjoint in the supported OpenCode mapping. Boundary/decomposition reviewed and accepted after SDET corrections.
-- SE implemented additive token summaries/RPC and clickable shared-session panel selector; dollars, agent tools, recording and history policies remain unchanged. Implementation/test candidate: `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19`.
-- SDET corrected the loading-state test literal and test-owned SQLite handle leaks. Independent Windows and disposable Linux runs pass all 342 tests plus typecheck/lint/build/format gates; fixture/container cleanup passed. Durable verification evidence committed at `9d87c3e` in change tasks.
-- DevOps prepared digest-pinned isolated Linux procedure. No real user settings, database or provider credentials used.
-- Blocked: actual supported OpenCode host lifecycle/RPC and normal model-activity proof. No feature/release sign-off, sync/archive, PR or merge yet. Branch/worktree retained by SDET; model access or alternative scoped verification decision requires user authorization.
+- Breakdown and unit controls use separate rows and wrap only between complete choices.
+- Layout follows the panel's available width rather than the terminal's full width.
+- Long breakdown names truncate before numeric amounts.
 
-## 2026-10-24 — Global configuration switched to local fork
+## Installation
 
-- User explicitly authorized scoped global server/CLI configuration edits and backups. General replaced the original plugin with `file:///C:/Users/User/work/projects/opencode-cmon-tokens/.worktree/toggle-token-display` in global `opencode.json`; removed the redundant original entry from `cli.json` so the package's `./tui` export loads automatically.
-- Adjacent originals preserved as `opencode.json.bak-20261024-002701` and `cli.json.bak-20261024-002701`. JSON syntax/package exports verified; unrelated settings preserved. No credentials inspected, model calls made or services restarted.
-- User should `/reload` and confirm the expanded panel offers `$` / `Tokens`. Actual runtime success remains unconfirmed. This worktree is now a global runtime dependency and must remain until configuration is repointed.
+- Local directory configuration points to the built `dist` directory, which contains server, TUI and RPC entrypoints.
+- [Installation and update instructions](../README.md) cover Windows, macOS and Linux.
 
-## 2026-10-24 — Permanent install and published instructions
-
-- User authorized selecting a permanent location, installing/repointing global OpenCode, documenting features/installation, and committing/pushing without merging.
-- README now documents Windows/POSIX clone/build/config/update/uninstall instructions using published `toggle-token-display`, plus toggle behavior and verification limitations. SE committed and pushed `73366cf114fab92f6b44311c5e17536517508924` to `renl/opencode-cmon-tokens`; `main` unchanged, no PR/merge.
-- General independently cloned that revision from public HTTPS into `C:\Users\User\.local\share\opencode\plugins\opencode-cmon-tokens`, ran frozen install/build successfully (Bun 1.4.3, Node 22.23.1), and verified clean source/unchanged manifest and lock.
-- Backed-up global `opencode.json` now references the permanent package directory. All unrelated settings preserved, CLI config unchanged, no worktree references remain. No service restart, model calls, or live-host proof performed.
-- Installation/setup complete; user should `/reload` and confirm the selector. Permanent clone is the runtime dependency; development worktree remains active for the unmerged feature, not cleanup-ready. Feature/release verification remains blocked only on the previously recorded live-host proof.
-
-## 2026-10-24 — Compact numbers and readable sidebar controls
-
-- Corrected our earlier installation mistake: local directory resolution requires compiled `dist` entrypoints, not repository-root package exports. Global config backed up and repointed to permanent install's `dist`; README corrected. User confirmed the panel now works.
-- User requested compact counts and intact clickable headings after the live screenshot exposed long totals and character-level wrapping. PM/UX/Architect updated the active change; SDET added actual nested-width/rounding/click tests and Architect accepted corrected boundary/decomposition.
-- SE implemented presentation-only refinement at `6ff10b39178bd1ce9ca5acb5080c049de1e08406`: k/M/B formatting, measured sidebar width, atomic controls on separate rows, name truncation preserving amounts. Accounting/RPC/tools unchanged.
-- Independent SDET evidence `e8eb17a`: 381 tests plus static/build/format pass on Windows and disposable Linux; container/fixture cleanup passed. One initial native backfill timeout remains documented; unchanged targeted/full retries passed, cause not established.
-- Next: publish branch and update/rebuild permanent installed clone; user visual check of new layout. No clean-first-run/provider proof, merge, release claim or worktree cleanup authorized.
-- Delivery completed: published `0de00dd4f0fe91f0ab52459f3f9599540de6d110`, permanent clone fast-forwarded to that revision and frozen install/build passed with unchanged manifest/lock and clean source. Config retains the correct `dist` directory. No services restarted; user `/reload` and visual confirmation remain.
+Dollar calculations, reporting tools, recording, retention and historical repair behavior are unaffected by display-unit selection.

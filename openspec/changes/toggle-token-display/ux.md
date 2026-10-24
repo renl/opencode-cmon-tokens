@@ -1,10 +1,9 @@
 # Monthly usage selector — UX reference
 
-- **Owner:** `@ux-ui-designer`; workflow: `software-change`, UX specification stage.
 - **Parent / behavior authority:** [Proposal](proposal.md), [product delta](specs/cost-display/spec.md).
-- **Scope:** Existing terminal sidebar and home footer only; retain host theme, dollar formatting, recording, tools, refresh/retry and persisted open/closed behavior. This is the change-local, separately owned UX reference; architecture should link here rather than copy it.
-- **Read next:** Architect's [design contract](design.md) for token semantics and summary behavior. No formula is defined here.
-- **Inputs:** `src/tui.tsx`, `src/tui.test.ts`, `src/tui.click.test.tsx`. No `docs/ux-ui-spec/README.md` exists in this worktree; this dispatch authorizes only this file, not a new documentation directory.
+- **Scope:** Existing terminal sidebar and home footer only; retain host theme, dollar formatting, recording, tools, refresh/retry and persisted open/closed behavior. This is the change-local UX reference; the design contract links here rather than duplicating it.
+- **Read next:** [Design contract](design.md) for token semantics and summary behavior. No formula is defined here.
+- **Inputs:** `src/tui.tsx`, `src/tui.test.ts`, `src/tui.click.test.tsx`.
 
 ## Layout and hierarchy
 
@@ -23,7 +22,7 @@ In the opened, ready sidebar, put **View** and **Unit** on separate rows at ever
 - Use two spaces between control segments; no blank row between groups, surrounding panel, icons or new decorative treatment. Preserve existing `View` labels verbatim.
 - Active choice is bracketed **and bold**: `[$]` or `[Tokens]`. Inactive choice is bare `$` or `Tokens`. Reuse existing action text styling for controls, base text for header amounts and muted text for breakdowns. Selection must remain clear in monochrome.
 - Both groups precede any coverage explanation, then breakdown rows. No selector in the footer or collapsed block.
-- Keep complete amounts right-aligned, with at least one blank cell separating name and amount. Names may truncate with `…`; amounts, markers and unit labels may not. Keep `tokens` on every token amount: the product delta requires it, so omitting repeated labels is not authorized.
+- Keep complete amounts right-aligned, with at least one blank cell separating name and amount. Names may truncate with `…`; amounts, markers and unit labels may not. Keep `tokens` on every token amount, as required by the product delta.
 
 ## Width adaptation (actual container character cells)
 
@@ -45,12 +44,12 @@ In the opened, ready sidebar, put **View** and **Unit** on separate rows at ever
 - **At 40 columns:** same two control rows as the 45-column example, not a combined row. `▼ This month: 1.58B tokens` fits on one line; names receive less space, but amounts remain complete. These are container widths even on a 120-column terminal.
 - **Header amount does not fit:** retain glyph and `This month:` on the first line; move the complete amount to a two-cell-indented continuation line. Applies when open or collapsed. Keep the existing single-line dollar header at 22 columns when it fits.
 - **Long breakdown names:** allocate the intact amount first, then one separating cell, then the name. Truncate only the name with `…` if necessary. If fewer than four name cells remain, show the name on its own two-cell-indented line (truncate to that width), then the complete amount on the following two-cell-indented line. Never let name wrapping consume amount or control space. `Tokens unavailable` is also an intact amount. Coverage explanation wraps at word boundaries below all controls.
-- At the specified 45/40/22 widths, every control and the compact million/billion examples fit intact. If an exceptional amount cannot fit even alone (for example an unusually large dollar value), preserve its complete text on a dedicated overflow line rather than character-wrap or abbreviate dollars; Architect must identify any host clipping limitation. Below 22 columns is not a new guaranteed layout target.
+- At the specified 45/40/22 widths, every control and the compact million/billion examples fit intact. If an exceptional amount cannot fit even alone (for example an unusually large dollar value), preserve its complete text on a dedicated overflow line rather than character-wrap or abbreviate dollars; document any host clipping limitation. Below 22 columns is not a new guaranteed layout target.
 - Footer retains its existing **single line with trailing truncation** at its own available host width; do not enlarge it. Format compact token amounts before clipping, total first. Sidebar amounts must not inherit footer truncation.
 
-### Source-grounded correction boundary
+### Container-width validation
 
-`src/tui.tsx` currently bases control packing, header fit and breakdown fit on terminal dimensions, explicitly assuming the slot fills the host column. Its control text is not explicitly protected against shrinking. This is consistent with the reported fragmentation in a narrower sidebar; it does not prove the screenshot's exact cause. Existing `src/tui.click.test.tsx` renders the panel at the renderer's full width, so it does not establish correct behavior in a narrow container inside a wider terminal. Correction acceptance must cover that nested-container case, not just change a width arithmetic test.
+Validate control packing, header fit and breakdown fit in a narrow container inside a wider terminal. Full-terminal-width rendering and width arithmetic tests alone do not establish correct nested-container behavior. Protect control text against shrinking.
 
 ## Interaction and session state
 
@@ -87,13 +86,12 @@ Unavailable/partial token history is a ready state, not a failed request. All si
 - Preserve readable plain-text labels and selectable displayed amounts. Brackets/bold convey selection without colour; `Error`, `~` and the coverage sentence carry status without colour. Use host theme roles, not hard-coded colours; verify text contrast against the host background (AA target 4.5:1). No animation or hover-only information.
 - **Hover / pressed:** retain the existing View controls' stable text styling; no layout shift or transient unit change. **Selected:** bracketed/bold. **Unavailable controls:** omitted during loading/error rather than misleadingly disabled; available in empty/partial/unavailable ready states.
 - Current supplied controls are mouse-driven terminal text, not native focusable widgets: no plugin tab stops, keyboard shortcut, browser ARIA or live-region mechanism is evidenced in the inspected UI. Preserve host keyboard handling; do not hijack Tab or typing or claim screen-reader/keyboard compliance. Reading order is header → View choices → Unit choices → coverage → breakdowns.
-- If a supported native host focus path is available, reuse it: follow that reading order, show a visible focus indicator distinct from selection, activate choices with Enter/Space, and retain focus on the activated choice. Do not silently introduce a new navigation system. Architect must record any remaining keyboard/screen-reader limitation; full WCAG compliance is not established by this mouse-only change. Terminal cell targets cannot promise a 44px touch target; touch-browser affordances are outside this scope.
+- If a supported native host focus path is available, reuse it: follow that reading order, show a visible focus indicator distinct from selection, activate choices with Enter/Space, and retain focus on the activated choice. Do not silently introduce a new navigation system. Document any remaining keyboard/screen-reader limitation; full WCAG compliance is not established by this mouse-only change. Terminal cell targets cannot promise a 44px touch target; touch-browser affordances are outside this scope.
 
-## Review / handoff
+## Validation expectations
 
-- **Architect:** align the existing design with compact formatting and actual-container fit; preserve established token semantics and dollar/tool contracts. Record host measurement/overflow and keyboard/screen-reader limitations, not a terminal-full-width assumption.
-- **SDET:** rendered frame and coordinate-click checks at actual panel widths 45, 40 and 22 inside a wider terminal (for example 120 columns), plus resize at fixed terminal width. Cover all six unit/breakdown combinations; complete control words/brackets, nonoverlap, intact amounts and long-name truncation/stacking. Click each choice after reflow, including selected brackets; labels/gaps/active clicks must not collapse or trigger ancestors. Test dragging/selectability and unchanged keyboard handling.
-- **SDET:** verify compact-format boundaries and promotion against the product table, singular/plural, partial/unavailable/empty states, long names, differing rankings that round to the same string, footer one-line truncation, both switch directions, shared mode/navigation, restart defaults and recovery. All existing dollar/tool behavior remains unchanged. Frame/click proof is required; pure formatting/packing assertions alone do not prove sidebar readability.
-- **CoS:** route aligned contract and test updates to their owners before implementation. No PM question is needed: retain per-amount unit labels as required. Only this UX file changed; no code/tests were run or edited.
+- Preserve established token semantics and dollar/tool contracts alongside compact formatting and actual-container fit. Document host measurement/overflow and keyboard/screen-reader limitations, not a terminal-full-width assumption.
+- Use rendered frame and coordinate-click checks at actual panel widths 45, 40 and 22 inside a wider terminal (for example 120 columns), plus resize at fixed terminal width. Cover all six unit/breakdown combinations; complete control words/brackets, nonoverlap, intact amounts and long-name truncation/stacking. Click each choice after reflow, including selected brackets; labels/gaps/active clicks must not collapse or trigger ancestors. Test dragging/selectability and unchanged keyboard handling.
+- Verify compact-format boundaries and promotion against the product table, singular/plural, partial/unavailable/empty states, long names, differing rankings that round to the same string, footer one-line truncation, both switch directions, shared mode/navigation, restart defaults and recovery. All existing dollar/tool behavior remains unchanged. Frame/click proof is required; pure formatting/packing assertions alone do not prove sidebar readability.
 
 **Accessibility limitation:** the inspected plugin provides no keyboard/focus or screen-reader contract; do not represent this reference as proof of AA conformance.

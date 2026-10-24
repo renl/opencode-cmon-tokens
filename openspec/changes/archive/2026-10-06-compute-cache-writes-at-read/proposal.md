@@ -2,7 +2,7 @@
 
 ## Why
 
-Persisting the cache-write add-on at write time (and correcting history once) has failed three times on the user's database: the add-on depends on the model catalog, which is incomplete or provisional at startup, so rows were stored (and a one-time marker set) with wrong zeros that never heal. The user wants the calculation in code, not baked into the database.
+Persisting the cache-write add-on at write time (and correcting history once) can leave incorrect zeros: the add-on depends on the model catalog, which may be incomplete or provisional at startup, so rows can be stored (and a one-time marker set) with wrong zeros that never heal. Calculating the add-on at read time avoids persisting those provisional results.
 
 ## What Changes
 
@@ -33,4 +33,3 @@ Out of scope: non-Claude/non-Copilot models, title-generation cost, any other di
 
 - `src/store.ts` (schema v3, summary), `src/recorder.ts`, `src/backfill.ts`, `src/index.ts`, `src/pricing.ts` (read-time use), tests. Net code reduction.
 - Schema 2 -> 3 (additive): a v2 process already running keeps working; a v2 build starting later refuses the database (same rollback caveat as before).
-- Follow-up: bump the pinned SHA in ai-dotfiles.

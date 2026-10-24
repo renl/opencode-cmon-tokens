@@ -1,10 +1,10 @@
 ## Context
 
-The V2 recorder keeps starts in memory; missing starts currently borrow `lastStep`. Startup fills do not repair attribution. User-approved scope is exact-message live recovery and startup repair of missing step agent/provider/model only, within existing modules and retained history. Verified source: `session_message(id, session_id, type, data)`; attribution paths are `$.agent`, `$.model.providerID`, `$.model.id`.
+The V2 recorder keeps starts in memory; missing starts currently borrow `lastStep`. Startup fills do not repair attribution. Scope is exact-message live recovery and startup repair of missing step agent/provider/model only, within existing modules and retained history. Verified source: `session_message(id, session_id, type, data)`; attribution paths are `$.agent`, `$.model.providerID`, `$.model.id`.
 
 ## Goals / Non-Goals
 
-Recover evidence-backed attribution without compromising accounting or availability. Preserve IDs, timestamps, known fields and every non-attribution value on existing steps. No new module, dependency, schema, RPC/TUI surface, compaction change or reload change. The separately authorized local repair is outside implementation scope.
+Recover evidence-backed attribution without compromising accounting or availability. Preserve IDs, timestamps, known fields and every non-attribution value on existing steps. No new module, dependency, schema, RPC/TUI surface, compaction change or reload change. A separate local repair is outside implementation scope.
 
 ## Decisions
 

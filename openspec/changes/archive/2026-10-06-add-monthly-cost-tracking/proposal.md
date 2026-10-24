@@ -32,6 +32,5 @@ Out of scope: per-model display, budgets/alerts, exporting, currencies other tha
 
 ## Impact
 
-- New repository `afriemann/opencode-cmon` (TypeScript, Bun, `bun:sqlite`, SolidJS/OpenTUI); depends on `@opencode/plugin` >= 2.
+- TypeScript, Bun, `bun:sqlite`, SolidJS/OpenTUI; depends on `@opencode/plugin` >= 2.
 - Creates `~/.local/share/opencode/cmon.db`; reads (read-only) `~/.local/share/opencode/opencode.db` for backfill.
-- Follow-up in `ai-dotfiles` (separate commit): vendor, build, and enable the plugin.

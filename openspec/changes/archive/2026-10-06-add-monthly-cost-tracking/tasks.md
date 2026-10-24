@@ -23,8 +23,8 @@
 ## 5. TUI (TDD)
 
 - [x] 5.1 useMonthlyCost hook, sidebar and footer components, shared persisted state — all cost-display scenarios
-- [ ] 5.2 Verify rendered output against design.md wireframes (live, after install via ai-dotfiles)
+- [ ] 5.2 Verify rendered output against design.md wireframes in OpenCode
 
 ## 6. Verify
 
-- [x] 6.1 Full tests, lint, build to dist/ (live load in opencode follows ai-dotfiles install)
+- [x] 6.1 Full tests, lint, build to dist/

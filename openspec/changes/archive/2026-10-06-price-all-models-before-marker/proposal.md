@@ -2,7 +2,7 @@
 
 ## Why
 
-After `fix-correction-marker` the one-time correction still priced nothing on the user's database (1,140 Copilot Claude messages with cache-write tokens, none corrected) yet set its marker. The correction's precondition only checks that some priced Copilot Claude model exists, not that the models present in the data are priced, and nothing is logged, so the runtime catalog state is invisible.
+After `fix-correction-marker` the one-time correction could still price nothing yet set its marker. The correction's precondition only checks that some priced Copilot Claude model exists, not that the models present in the data are priced, and nothing is logged, so the runtime catalog state is invisible.
 
 ## What Changes
 
@@ -25,6 +25,5 @@ Out of scope: live-row pricing, schema, display.
 ## Impact
 
 - `src/backfill.ts`, `src/store.ts` (marker name), tests. No schema change.
-- Follow-up: bump the pinned SHA in ai-dotfiles.
 
 design.md skipped: bug fix confined to one function and one constant, no API/data-model/component-boundary change, no infrastructure, no new dependencies.

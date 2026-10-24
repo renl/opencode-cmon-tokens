@@ -25,6 +25,5 @@ Out of scope: any change to recording, retention, RPC, or the `…` loading plac
 ## Impact
 
 - `src/tui.tsx` and `src/tui.test.ts` only. No dependency or schema change.
-- Follow-up: bump the pinned SHA in `ai-dotfiles`.
 
 design.md skipped: pure presentation tweak, one module, no API/data/component-boundary change, no infrastructure, no new dependencies.

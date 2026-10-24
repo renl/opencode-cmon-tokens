@@ -8,4 +8,4 @@
 
 ## 2. Verify
 
-- [ ] 2.1 Tests, tsc, eslint, build done; live check after chezmoi bump
+- [ ] 2.1 Tests, tsc, eslint and build complete; rendered check in OpenCode remains pending

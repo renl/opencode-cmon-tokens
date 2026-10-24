@@ -35,4 +35,4 @@
 
 - [x] 7.1 Document the tools, period grammar, project rule and the `execute` caveat in `README.md`; verify README matches behaviour
 - [x] 7.2 Run `bun run test`, `bun run lint`, `bun run build`; verify all pass
-- [x] 7.3 Route the `AGENTS.md` "No agent tools" line update to `agent-engineer`; verify the line is updated
+- [x] 7.3 Update the `AGENTS.md` runtime description to include the read-only cost-analysis tools; verify it matches registration in `index.ts`

@@ -22,5 +22,3 @@ Users need model, provider and agent totals to remain accurate when the recorder
 ## Impact
 
 Changes are confined to `src/recorder.ts`, `src/backfill.ts`, `src/store.ts`, `src/index.ts`, the recorder/backfill/store tests, README and this capability's OpenSpec artifacts. No dependency, database schema, public tool/RPC or TUI changes are planned. OpenCode's database remains read-only. Compaction attribution and plugin reload behavior remain unchanged.
-
-The separately authorized local repair of two verified rows has been completed with a secure backup; automatic repair generalizes that correction only to missing fields supported by exact-message evidence.

@@ -28,4 +28,4 @@
 
 ## 6. Verify
 
-- [x] 6.1 Tests, tsc, eslint, build; run against a copy of the live db with the real catalog shape; README note
+- [x] 6.1 Tests, tsc, eslint, build; database/catalog-shape compatibility checks; README note

@@ -2,7 +2,7 @@
 
 ## Why
 
-opencode's cost figure prices cache-write tokens at $0 for Claude models, but GitHub Copilot bills them at 1.25x the input price. Verified against the GitHub usage table for Sonnet 5.5 (UTC days 1, 2, 6 Oct: formula matches to the cent) and Opus 5.5. The plugin therefore under-reports Sonnet by roughly 40%, and the gap grows with cache-heavy use. The user wants accurate figures in the TUI.
+opencode's cost figure prices cache-write tokens at $0 for Claude models, but GitHub Copilot bills them at 1.25x the input price. The plugin therefore under-reports cache-write costs, and the gap grows with cache-heavy use. The TUI needs accurate figures.
 
 ## What Changes
 
@@ -31,4 +31,3 @@ Out of scope: non-Claude models, Copilot-side services (Code Review, GPT-5 mini)
 
 - `src/recorder.ts`, `src/store.ts`, `src/backfill.ts`, `src/index.ts`, tests. Schema version 1 -> 2 (additive column).
 - Depends on `ctx.model.list()` (model cost tiers, per million tokens) at runtime.
-- Follow-up: bump the pinned SHA in ai-dotfiles.

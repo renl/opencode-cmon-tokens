@@ -53,10 +53,10 @@ Same-id merge: one model id served by two providers appears as one Models line w
 Region notes: indent fixed 2; `View`, each tab word fixed-width, never wrapped. Row is ~34 cols; sidebar may be narrower.
 
 - Drop-priority when the row does not fit: truncate from the end (rightmost clipped first: `Providers`, then `Models`). Nothing reflows to a second line.
-- Consequence: a clipped tab may be unreachable by mouse at very narrow widths. Accepted floor: below ~34 columns the rightmost tab can be partly or wholly hidden; the active-tab bracket may also clip. Alternative considered and rejected (YAGNI): dropping `View` first (saves 6 cols) or wrapping the row. If narrow sidebars are common, dropping the `View` label first is the recommended follow-up; not in scope. Flag to the user as a decision: ship clip-only, or drop `View` below a threshold.
+- Consequence: a clipped tab may be unreachable by mouse at very narrow widths. Accepted floor: below ~34 columns the rightmost tab can be partly or wholly hidden; the active-tab bracket may also clip. Alternative considered and rejected (YAGNI): dropping `View` first (saves 6 cols) or wrapping the row. If narrow sidebars are common, dropping the `View` label first is the recommended follow-up; not in scope. Open decision: ship clip-only, or drop `View` below a threshold.
 - Lines keep the existing rule: label flexes and truncates with `…`, amount column never truncated. Bare model ids are shorter, so truncation is rarer.
 
-## Behaviour scenarios (for the engineer to transcribe)
+## Behaviour scenarios (for the delta spec)
 
 - GIVEN the block opens for the first time THEN the Agents list and `[Agents]` are shown.
 - WHEN `Models` is clicked THEN the list shows bare model ids, `[Models]` is active, and open/closed state, footer, and storage are untouched.
@@ -80,4 +80,4 @@ Click routing must be tested through real input, not helper-only: use opentui `t
 - TUI front-end: three-value tab signal, per-word targets, helper changes. Done: goldens and mockMouse click tests pass; footer snapshot unchanged.
 - Spec: MODIFIED deltas must restate the whole requirements touched (opened block, summary shape, older-server tolerance) including footer scenarios verbatim. Done: `openspec validate` clean.
 
-Boundary: this covers the interface; `code-reviewer` reviews the resulting code.
+Boundary: this covers the interface.
