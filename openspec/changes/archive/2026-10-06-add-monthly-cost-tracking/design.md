@@ -156,7 +156,7 @@ Copy opencode-todo exactly:
 
 - `package.json` `exports` `"."`, `"./rpc"`, `"./tui"`.
 - Peer dependencies `@opencode/plugin >=2`, plus optional `@opentui/*` and `solid-js`.
-- `build` = `tsc -p tsconfig.build.json && node script/build-tui.mjs`, writing to `dist/`. A vendored copy loads from `dist/` (that follow-up is out of this repo).
+- `build` = `tsc -p tsconfig.build.json && node script/build-tui.mjs`, writing to `dist/`. The vendored copy in ai-dotfiles loads from `dist/` (that follow-up is out of this repo).
 - No runtime dependencies besides `bun:sqlite`.
 
 ```mermaid

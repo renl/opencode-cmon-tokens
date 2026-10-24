@@ -66,7 +66,7 @@ flowchart LR
   D -- no --> F[catalog write == 0 rule D2]
 ```
 
-## Behavioural requirements implied (for the delta spec)
+## Behavioural requirements implied (for the engineer to transcribe into the delta spec)
 
 - Change "Totals include the cache-write add-on": the add-on applies when the recorded cost is below `expected + addOn/2` (D1). It falls back to "selected tier prices cache writes at zero" only when output or reasoning tokens, or the tier's output price, are unknown (D2).
 - Scenarios to add or replace:

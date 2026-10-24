@@ -27,4 +27,4 @@ Out of scope: step duration, dollar saving estimates, tool-call attribution, TUI
 
 ## Impact
 
-`src/store.ts`, `src/types.ts`, `src/pricing.ts`, `src/recorder.ts`, `src/backfill.ts`, `src/index.ts`, new `src/analysis.ts` and `src/tools.ts`, tests, README. No new dependencies.
+`src/store.ts`, `src/types.ts`, `src/pricing.ts`, `src/recorder.ts`, `src/backfill.ts`, `src/index.ts`, new `src/analysis.ts` and `src/tools.ts`, tests, README. `AGENTS.md` ("No agent tools") needs a one-line update via `agent-engineer`. No new dependencies.

@@ -222,7 +222,7 @@ sequenceDiagram
 1. Deploy the new build. The first start migrates v2 → v3 under the immediate lock (concurrent starters upgrade once), then fills tokens for every row inside the retention window. Until the fill completes, the summary may show `~`.
 2. Later starts: if no row has NULL tokens, the fill is a single indexed `SELECT` that returns nothing.
 3. Rollback: a v2 build refuses a v3 database, which is the same caveat as before. To recover, restore a backup, or delete `cmon.db` and let backfill reimport history.
-4. Follow-up outside this repo: bump the pinned SHA in the consuming installation.
+4. Follow-up outside this repo: bump the pinned SHA in ai-dotfiles.
 
 ## Component Breakdown
 

@@ -1,10 +1,10 @@
 # Design: per-model breakdown in the opened sidebar
 
-Mode: design. Domain: TUI (opentui/solid), single surface `CostSidebar` in `src/tui.tsx`. Existing design system = the host theme (`context.theme`). Constraints: toggle visually distinct from the lines; default by-agent; not persisted (local signal in `CostSidebar`); footer unchanged; summary gains `models: {model, micros}[]` sorted by micros desc then name; model label = `providerId/modelId`.
+Mode: design. Domain: TUI (opentui/solid), single surface `CostSidebar` in `src/tui.tsx`. Existing design system = the host theme (`context.theme`). Given constraints from the user: toggle visually distinct from the lines; default by-agent; not persisted (local signal in `CostSidebar`); footer unchanged; summary gains `models: {model, micros}[]` sorted by micros desc then name; model label = `providerId/modelId`.
 
 ## Theme tokens (verified)
 
-Verified against the opencode v2 theme source (`packages/theme/src/tui/schema.ts`, `CompleteThemeTokensDefinition`). Tokens in use or chosen:
+Verified against the opencode v2 theme source (`packages/theme/src/tui/schema.ts`, `CompleteThemeTokensDefinition`; `@opencode/plugin` is not installed in this worktree, so the plugin-types check could not be run — implementer re-confirms by type-check). Tokens in use or chosen:
 
 | Role                 | Token                            | Status                                   |
 | -------------------- | -------------------------------- | ---------------------------------------- |
@@ -61,7 +61,7 @@ Resize: header and toggle row are fixed-content; if narrower than ~22 columns th
 - The two-state control toggles on a click anywhere on the row (single `onMouseDown`), so there is no per-word hit-target ambiguity.
 - Contrast: `text.action.primary.base` vs the sidebar background is theme-dependent and not verifiable from this repo; accepted as the host's own interactive token (same trade-off as the existing tokens).
 
-## Behaviour scenarios (for the delta spec)
+## Behaviour scenarios (for the engineer to transcribe into the delta spec)
 
 - GIVEN the block is opened for the first time WHEN it renders THEN the by-agent list and `[Agents]` active are shown.
 - WHEN the toggle row is clicked THEN the list switches to models, `[Models]` becomes active, and the open/closed state, the footer, and storage are untouched.
@@ -82,10 +82,10 @@ In-repo snapshot/golden tests (extend `src/tui.test.ts`; no vision MCP). Pure he
 ## Concerns about the proposal's scope
 
 1. **Spec deltas are larger than "Modified: cost-display" suggests.** The existing requirement "Opened block shows cost per agent" bundles the footer clause; a MODIFIED delta must restate it whole and keep the footer scenarios verbatim. The summary requirement and the add-on requirement ("per-agent amounts") also need `models`.
-2. **Truncation hides the distinguishing part.** `providerId/modelId` truncated at the end keeps the provider and cuts the model id. Acceptable under the stated constraint; if it proves poor, middle/left truncation or dropping the provider prefix is a follow-up, not in scope.
+2. **Truncation hides the distinguishing part.** `providerId/modelId` truncated at the end keeps the provider and cuts the model id. Acceptable per the user's constraint; if it proves poor, middle/left truncation or dropping the provider prefix is a follow-up, not in scope.
 3. **Missing or empty `provider_id`/`model_id`.** Not stated in the proposal. Needs a decision (e.g. label `unknown`) before implementing so rows are not dropped and sum(models) = total.
 4. **Keyboard/gamepad reachability.** The toggle (like the existing header) is mouse-only (`onMouseDown`), below the floor of keyboard reachability. Kept for consistency with the existing block; flagged as a known gap.
 5. **Mode lost on remount.** A component-local signal resets if the host remounts the sidebar slot; matches "not persisted" but is stricter than "per TUI start". Acceptable.
 6. **Hover/pressed feedback not designed**; terminal re-render on click is the feedback.
 
-Boundary: this design covers the interface.
+Boundary: this design covers the interface; `code-reviewer` reviews the resulting code.

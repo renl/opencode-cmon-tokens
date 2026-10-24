@@ -89,7 +89,7 @@ Imported rows get `details_checked = 1`.
 | Code Mode, `pinned` | one catalog line each; schemas fetched on demand | all agents with `execute` allowed |
 | Code Mode, unpinned | ≤ pinned | may drop out of the inline listing under the 2 000-char budget |
 
-**Choice: pinned Code Mode.** A cost tool that adds input tokens to every step works against its own purpose. Caveat (recorded as a risk): an agent whose permissions deny `execute` will not see the tools. No permission gate is added.
+**Choice: pinned Code Mode.** A cost tool that adds input tokens to every step works against its own purpose. Caveat (recorded as a risk): an agent whose permissions deny `execute` will not see the tools. No permission gate is added, per the user.
 
 - Results return both `output` (structured, declared output schema) and `content` (compact text). Code Mode scripts see `output`, and direct callers see `content`. They carry the same facts.
 
@@ -214,14 +214,14 @@ flowchart LR
 - `parent_session_id` index: recursion depth is small and the table is bounded by retention.
 - Prefix match on session ids: full ids are shown.
 - Moving the TUI summary onto the TS path: out of scope.
-- Permission gate: excluded.
+- Permission gate: excluded by the user.
 - Tool-call attribution: out of scope.
 
 ## Risks / Trade-offs
 
 - Agents that deny `execute` cannot see the tools → documented in the README. Switching to `codemode:false` is a one-line change if users ask for it, at the cost of per-request tokens.
 - Loading a 6-month period into memory for analysis is slow on a large ledger → select narrow columns, filter in SQL on the indexed `created_at`, and run hotspots only for the requested period.
-- Thresholds are heuristic → they are named constants and every finding shows its evidence and threshold, so a wrong threshold shows up as wrong findings rather than as wrong numbers.
+- Thresholds are heuristic (the user accepted "let's try it") → they are named constants and every finding shows its evidence and threshold, so a wrong threshold shows up as wrong findings rather than as wrong numbers.
 - `failed` correction depends on `$.error` being present in stored assistant messages. That is verified in the schema, **not** in data → if absent, history stays under-counted as before. A test fixture covers both cases.
 - Directory caching per session ignores `session.move` → the envelope location is preferred, and the cache is only the fallback.
 - Envelope `location.directory` is assumed to equal the session's `location.directory` → unverified. Both are directory strings of the same `LocationRef` type, and the project match tolerates subdirectories.
@@ -232,7 +232,7 @@ flowchart LR
 1. Release. The first start of the new version adds the missing columns (idempotent, immediate lock), runs the existing token fill, then the detail fill.
 2. Processes that are already running keep working and their rows are filled later.
 3. Rollback: install the previous version. `user_version` is still 3, so it opens normally and ignores the extra columns. No manual step.
-4. Docs: README tool section. `AGENTS.md` "No agent tools" needs a one-line update.
+4. Docs: README tool section. `AGENTS.md` "No agent tools" needs a one-line update through `agent-engineer`.
 
 ## Behavioural requirements implied (for delta specs)
 
@@ -263,4 +263,4 @@ flowchart LR
 | `analysis.ts` (period parsing, aggregation, hotspots) | application code, pure | unit tests per finding type, `others` row, invariant test against `buildSummary` |
 | `tools.ts` + `index.ts` wiring | application code | idempotent transform, dispose on shutdown, closed guard, no tools when store fails; output within the ceiling |
 | README + spec deltas | docs | tools, period grammar, project rule, `execute` caveat documented |
-| `AGENTS.md` line | instruction file | line updated |
+| `AGENTS.md` line | instruction file | updated by `agent-engineer` |

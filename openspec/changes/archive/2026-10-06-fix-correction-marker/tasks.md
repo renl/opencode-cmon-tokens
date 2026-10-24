@@ -7,4 +7,4 @@
 
 ## 2. Verify
 
-- [x] 2.1 Tests, tsc, eslint, build; database compatibility checks
+- [x] 2.1 Tests, tsc, eslint, build; rerun on a copy of the live db

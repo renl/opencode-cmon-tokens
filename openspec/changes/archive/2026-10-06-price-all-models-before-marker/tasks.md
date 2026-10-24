@@ -7,4 +7,4 @@
 
 ## 2. Verify
 
-- [x] 2.1 Tests, tsc, eslint, build; database/catalog-shape compatibility checks
+- [x] 2.1 Tests, tsc, eslint, build; run against a copy of the live db with the real catalog shape
