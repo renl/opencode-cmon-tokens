@@ -386,6 +386,7 @@ def first_use(run, terminal, session, observer, check):
           len(attempts)==requests["attempts"] and requests["reservedUSD"]==requests["attempts"]*0.01 and
           all(e["providerID"]=="deepseek" and e["modelID"]=="deepseek-flash" and e["kind"]=="primary" for e in attempts))
     cost=sum(row["cost_micros"] for row in rows)/1000000
+    check("real RPC dollars equal stored monetary total", reply["totalMicros"]==sum(row["cost_micros"] for row in rows))
     check("recorded cost within reservations and approved budget", 0<=cost<=requests["reservedUSD"]<0.05)
     dollar_before={key:reply[key] for key in ("revision","totalMicros","complete","agents","models","providers")}
     terminal.frame("activity-sidebar-dollars")
@@ -562,7 +563,9 @@ def opened_zero_dollars(text):
 
 def assistant_confirmed(text):
     # The submitted user text "Reply OK." is not an assistant result.
-    return bool(re.search(r"(?m)^\s*OK[.!]?\s*$",text))
+    # The independent sidebar can occupy the right-hand cells of the same row.
+    return any(re.fullmatch(r"[ \t]*OK[.!]?(?:[ \t]{2,}[^\r\n]*)?[ \t]*", row)
+               for row in text.splitlines())
 
 
 def cleanup(run):
@@ -616,8 +619,7 @@ def main():
               "inputPerMillion":0.3,"outputPerMillion":1.2,"maxOutput":256,"reservedPerAttempt":0.01})
         adapter=run / "index.js"
         source=adapter.read_text(encoding="utf-8")
-        assert source.count("0.0006072")==2, "Adapter reservation semantics changed"
-        adapter.write_text(source.replace("0.0006072","0.01"),encoding="utf-8")
+        assert source.count("state.attempts * 0.01")==2, "Adapter reservation semantics changed"
     success=False
     try:
         execute(["bun","run","build"],cwd=run / "candidate",timeout=120)

@@ -10,6 +10,43 @@ spec.loader.exec_module(driver)
 
 
 class Safety(unittest.TestCase):
+    def test_actual_http_guard_endpoint_reservations_and_redacted_rejections(self):
+        source = (driver.ROOT / "docs/operations/authenticated-candidate.mjs").read_text(encoding="utf-8")
+        hook = source.split('await hook("http.request", event => {', 1)[1].split('\n    });', 1)[0]
+        script = r'''
+let state={attempts:0,reservedUSD:0}, receipts=[];
+const statePath="unused", model=e=>{if(e.sessionID!=="ses_test" || e.model.providerID!=="deepseek" || e.model.id!=="deepseek-flash")throw Error("selection");};
+const record=(event,extra)=>receipts.push({event,...extra});
+const fs={readFileSync:()=>JSON.stringify(state),writeFileSync:(_,s)=>{state=JSON.parse(s)}};
+const guard=event=>{HOOK};
+const event=(url="https://api.deepseek.com/chat/completions",method="POST")=>({sessionID:"ses_test",model:{providerID:"deepseek",id:"deepseek-flash"},kind:"primary",request:new Request(url,{method})});
+const rejected=e=>{const before=JSON.stringify(state);let threw=false;try{guard(e)}catch{threw=true}if(!threw||JSON.stringify(state)!==before)throw Error("rejection/counter");};
+for(const [url,method] of [
+ ["https://api.deepseek.com/v1/chat/completions","POST"],
+ ["https://elsewhere.invalid/chat/completions","POST"],
+ ["http://api.deepseek.com/chat/completions","POST"],
+ ["https://api.deepseek.com:444/chat/completions","POST"],
+ ["https://api.deepseek.com/chat/completions?secret=never-log","POST"],
+ ["https://api.deepseek.com/chat/completions?","POST"],
+ ["https://api.deepseek.com/chat/completions#secret","POST"],
+ ["https://api.deepseek.com/chat/completions/","POST"],
+ ["https://api.deepseek.com/chat/completions","GET"]])rejected(event(url,method));
+if(receipts.length!==9 || receipts.some(r=>r.event!=="http-rejected" || Object.keys(r).sort().join()!=="event,method,origin,path,queryPresent") || JSON.stringify(receipts).includes("never-log"))throw Error("sanitized receipts");
+for(const patch of [{sessionID:"ses_other"},{kind:"auxiliary"},{model:{providerID:"other",id:"deepseek-flash"}}])rejected({...event(),...patch});
+for(let i=1;i<=3;i++){
+ const e=event();guard(e);
+ if(state.attempts!==i||state.reservedUSD!==i*.01||e.request.redirect!=="error")throw Error("reservation");
+ const body=await e.request.json();
+ if(body.model!=="deepseek-flash"||body.max_tokens!==256||body.thinking.type!=="disabled"||body.messages.length!==1||body.messages[0].content!=="Reply OK."||body.tools)throw Error("body");
+}
+rejected(event());
+for(const invalid of [{attempts:-1,reservedUSD:0},{attempts:1.5,reservedUSD:.015},{attempts:1,reservedUSD:.0006072}]){state=invalid;rejected(event());}
+console.log("PASS: exact endpoint; 9 sanitized rejections; 3 reservations; fourth blocked; zero dispatch");
+'''.replace("HOOK", hook)
+        result = driver.subprocess.run(["bun", "-e", script], cwd=driver.ROOT,
+                                       capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_no_shared_service_api_path(self):
         source = Path(driver.__file__).read_text(encoding="utf-8")
         self.assertNotIn('["opencode", "api"', source)
@@ -60,6 +97,8 @@ class Safety(unittest.TestCase):
             self.assertFalse(driver.assistant_confirmed(text))
         self.assertTrue(driver.assistant_confirmed('  OK  \n'))
         self.assertTrue(driver.assistant_confirmed('Reply OK.\n\n  OK.  \n'))
+        self.assertTrue(driver.assistant_confirmed('      OK.                              Providers'))
+        self.assertFalse(driver.assistant_confirmed('      OK request sent                   Providers'))
 
     def test_execution_is_bounded(self):
         with patch.object(driver.subprocess, "run") as run:
