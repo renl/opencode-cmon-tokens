@@ -179,7 +179,12 @@ PowerShell on Windows for local renderer/static checks; existing Linux wrappers 
 
 Setup checks: `bunx --no-install tsc --noEmit`, the two owned files' Prettier check and `git diff --check` exit 0. Final focused RED run: 0 pass / 2 fail, 98 assertions, exit 1. Renderers are destroyed in `finally`; no server, worker or host process is started by this regression. Production code is unchanged by test setup.
 
-- [ ] Correct footer allocation without self-clipping or sibling displacement.
-- [ ] Pass TOK-22 and affected renderer/static/build/format checks on a fresh candidate.
+- [x] Correct footer allocation without self-clipping or sibling displacement.
+- [x] Pass TOK-22 and affected renderer/static/build/format checks on a fresh candidate.
+  - Evidence, this commit: `src/tui.tsx` footer no longer clips to a width it measures from its own
+    clipped content; the contribution keeps its full text inside the host row, shrinks as a flex
+    item and clips only at draw time. TOK-22 2 pass / 0 fail (976 assertions, was 0/2 at 98);
+    affected suites 64 pass / 0 fail; full suite 383 pass / 0 fail; `tsc --noEmit`, lint, build,
+    Prettier and `git diff --check` exit 0. Confined renderer proof, not host proof.
 - [ ] Independently verify the corrected immutable candidate in the controlled harness and supported host; retain first-use authorization gate.
 - [ ] Confirm any later finalization delta is docs-only; otherwise revalidate affected evidence before archive/merge.

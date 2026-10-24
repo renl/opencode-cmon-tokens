@@ -474,11 +474,6 @@ function fitName(name: string, cells: number): string {
   return `${name.slice(0, cells - 1)}…`;
 }
 
-/** One-line footer content, clipped only at its end to its own available width. */
-function clipFooter(text: string, width: number): string {
-  return [...text].slice(0, Math.max(0, width)).join("");
-}
-
 /**
  * The panel's own content width, measured from the renderable the host actually lays out. The
  * terminal width is not a substitute: a sidebar can be narrow inside a wide terminal. The callback
@@ -665,11 +660,13 @@ export function CostFooter(props: {
   readonly context: Plugin.Context;
 }): JSX.Element {
   const { feed, view, toggle, unitState } = useCostBlock(props.context);
-  const [width, onSizeChange] = usePanelWidth();
   const text = (): string =>
     footerLine(feed.state(), view.open, unitState.unit);
+  // The host row allocates this contribution its share of the row; the text is never measured, so
+  // its own clipped width cannot become the next layout pass's available space. `wrapMode="none"`
+  // keeps one line and the row clips only the trailing end when space is genuinely short.
   return (
-    <box onSizeChange={onSizeChange} onMouseDown={toggle}>
+    <box flexShrink={1} overflow="hidden" onMouseDown={toggle}>
       <text
         fg={
           feed.state().kind === "error"
@@ -678,7 +675,7 @@ export function CostFooter(props: {
         }
         wrapMode="none"
       >
-        {width() > 0 ? clipFooter(text(), width()) : text()}
+        {text()}
       </text>
     </box>
   );
