@@ -29,3 +29,11 @@
 - General independently cloned that revision from public HTTPS into `C:\Users\User\.local\share\opencode\plugins\opencode-cmon-tokens`, ran frozen install/build successfully (Bun 1.4.3, Node 22.23.1), and verified clean source/unchanged manifest and lock.
 - Backed-up global `opencode.json` now references the permanent package directory. All unrelated settings preserved, CLI config unchanged, no worktree references remain. No service restart, model calls, or live-host proof performed.
 - Installation/setup complete; user should `/reload` and confirm the selector. Permanent clone is the runtime dependency; development worktree remains active for the unmerged feature, not cleanup-ready. Feature/release verification remains blocked only on the previously recorded live-host proof.
+
+## 2026-10-24 — Compact numbers and readable sidebar controls
+
+- Corrected our earlier installation mistake: local directory resolution requires compiled `dist` entrypoints, not repository-root package exports. Global config backed up and repointed to permanent install's `dist`; README corrected. User confirmed the panel now works.
+- User requested compact counts and intact clickable headings after the live screenshot exposed long totals and character-level wrapping. PM/UX/Architect updated the active change; SDET added actual nested-width/rounding/click tests and Architect accepted corrected boundary/decomposition.
+- SE implemented presentation-only refinement at `6ff10b39178bd1ce9ca5acb5080c049de1e08406`: k/M/B formatting, measured sidebar width, atomic controls on separate rows, name truncation preserving amounts. Accounting/RPC/tools unchanged.
+- Independent SDET evidence `e8eb17a`: 381 tests plus static/build/format pass on Windows and disposable Linux; container/fixture cleanup passed. One initial native backfill timeout remains documented; unchanged targeted/full retries passed, cause not established.
+- Next: publish branch and update/rebuild permanent installed clone; user visual check of new layout. No clean-first-run/provider proof, merge, release claim or worktree cleanup authorized.
