@@ -5,18 +5,18 @@ Let a user read compact token amounts and switch intact controls in a narrow sid
 - Authority: [proposal](proposal.md), [behavior delta](specs/cost-display/spec.md), [design contract](design.md), [UX](ux.md). Owner: SDET; workflow: `software-change`, setup/verification only.
 - Delivery: **one change, one branch/worktree, one PR**; checkpoints below are sequential commits, not separate PRs.
 - Baseline: `main @ ae05f0b69bacb0547a49873e8efd27f286b40a96`. Setup observed that same HEAD, with upstream artifacts/CoS status edits uncommitted. No production file was edited by SDET.
-- Current status: **presentation tests RED; Boundary ACCEPT; stale spacing assertion corrected, pending scoped Architect decomposition confirmation via CoS**. Earlier `73f1f09` Windows/Linux GREEN evidence remains historical, not proof of this correction. Real-host e2e remains BLOCKED; user-reported live operation after the `/dist` configuration correction is not independent first-use/provider acceptance. No sync/archive/merge authorization.
+- Current status: **C2 implemented; C3 affected presentation checks PASS, overall verification NOT CLEAN** on `6ff10b39178bd1ce9ca5acb5080c049de1e08406`: native full suite 380 pass / 1 timeout; current-candidate Linux run BLOCKED by fixed old runner pin. Boundary/decomposition ACCEPT. Earlier Windows/Linux GREEN evidence is historical, not proof of this correction. Real-host first-use/provider gates remain BLOCKED; user confirmation covers the earlier panel, not this correction. No clean local-update recommendation or sync/archive/merge/release sign-off.
 
 ## Worktree lifecycle
 
-| Field            | Value                                                                                     |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`         |
-| branch / change  | `toggle-token-display` / `toggle-token-display`                                           |
-| owner            | SDET (lifecycle); SE is later implementation custodian                                    |
-| status           | presentation RED; Boundary ACCEPT; spacing correction awaiting decomposition confirmation |
-| next action      | CoS obtains scoped Architect confirmation, then bounded SE presentation correction        |
-| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state   |
+| Field            | Value                                                                                   |
+| ---------------- | --------------------------------------------------------------------------------------- |
+| path             | `C:\Users\User\work\projects\opencode-cmon-tokens\.worktree\toggle-token-display`       |
+| branch / change  | `toggle-token-display` / `toggle-token-display`                                         |
+| owner            | SDET (lifecycle); SE is later implementation custodian                                  |
+| status           | C2 implemented; C3 partial PASS, full regression failed, Linux blocked                  |
+| next action      | CoS routes runner-pin correction and regression diagnosis; retain real-host gates       |
+| cleanup evidence | Retained intentionally; not landed or abandoned; no removal authorized by current state |
 
 ## Compact counts / actual-container correction — 2026-10-24
 
@@ -113,6 +113,33 @@ Architect's [design confirmation](design.md#decomposition-fidelity-accept--spaci
 | Scoped Prettier check (six declared files, `src/tui.tsx`, `README.md`) → `node_modules/refine2-format.log`; `git diff --check`                        | 0 / 0                                                                                       |
 
 Pre-fix baseline on the same worktree was 15 pass / 43 fail across the same three files (`node_modules/refine-red.log`), so the correction, not a harness change, turned them GREEN. Evidence limits: in-process native checks only; the 45/40/22-cell frames are rendered by the locked renderer inside a 120-cell terminal, not a real host slot. C3 independent verification, the real-host lifecycle/RPC/first-use gates, a controlled Linux re-run of this candidate, and README's now-stale “342 tests” verification sentence remain SDET/CoS-owned and are not claimed here.
+
+### C3 independent candidate evidence — 2026-10-24 (SDET)
+
+Authorized workflow: `software-change`, independent verification only; tasks/evidence commit only, no push. Read current design's presentation Boundary ACCEPT and decomposition ACCEPT for `188bd56`. Success condition: compact amounts and every intact choice remain readable/clickable in a narrow actual sidebar without changing accounting.
+
+**Pinned input:** `toggle-token-display @ 6ff10b39178bd1ce9ca5acb5080c049de1e08406`; tracked/untracked worktree status empty before and after checks. Target local `main` and observed `origin/main` both `ae05f0b69bacb0547a49873e8efd27f286b40a96` (no remote fetch performed in this bounded candidate run). No dependency install/change: Windows x64 / PowerShell 7, Bun `1.4.3-canary.1+bb35d1b81`, Node `v22.23.1`, plugin `2.0.24`, core/Solid `0.5.14`, solid-js `1.9.15`. Lock SHA-256 unchanged: `489dcc606351dfc3cf56620b81f1ab15d090fd340ed5acd11e5f001d499c6184`.
+
+Native commands below are bounded in-process checks, **not controlled host e2e**. Test children use canonical project-local `node_modules/.cache/cmon-tests` for all three temporary-directory variables. No services, global install/config, provider/model calls or environment improvisation. Logs: ignored `node_modules/c3-<name>.log`; test group 120 seconds, static/format 120 seconds, build 180 seconds.
+
+| Command / log name                                                                             | Exit / independent result                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bun run test ./src/test-support/token-host.test.ts` / `host`                                  | 0; 1 pass, 5 assertions; adapter sanity only                                                                                                                                                                                                                                                                        |
+| `bun run test ./src/token-summary.test.ts` / `summary`                                         | 0; 40 pass, 133 assertions; TOK-19 exact RPC total 2467, raw 1234 before 1233, unchanged dollars/ledger                                                                                                                                                                                                             |
+| `bun run test ./src/token-format.test.ts` / `format-tests`                                     | 0; 25 pass, 1079 assertions; below-1000 exactness, half-up suffix boundaries/promotion/trimmed zeroes, NULL/partial/singular, exact values despite equal strings                                                                                                                                                    |
+| `bun run test ./src/test-support/layout-boundary.test.tsx` / `boundary`                        | 0; 1 pass, 16 assertions; locked renderer API probe, not production proof                                                                                                                                                                                                                                           |
+| `bun run test ./src/token-display.test.tsx ./src/tui.click.test.tsx` / `rendered`              | 0; 33 pass, 1019 assertions; actual production rendering/coordinate clicks, six selections at nested 45/40/22 inside terminal 120, panel-only resize, reserved-cell no-ops/no ancestor action, selection drag, intact compact amounts/truncation/stacking, footer's own clipping, dollars restored/no switch writes |
+| `bun run test` / `full`                                                                        | **1; 380 pass / 1 fail, 2747 assertions, 381 tests / 17 files**. Existing `backfill > token fill > fills in chunks across many ids` exceeded its 5000 ms test timeout (reported 8287.83 ms). No retry, timeout relaxation or hotfix; cause unconfirmed. SE's 381-pass result is not reproduced.                     |
+| `bunx --no-install tsc --noEmit` / `types`; `bun run lint` / `lint`; `bun run build` / `build` | 0 / 0 / 0; TypeScript and TUI bundle generated                                                                                                                                                                                                                                                                      |
+| Scoped `bunx --no-install prettier --check` / `prettier`; `git diff --check`                   | 0 / 0; five affected test files, production `src/tui.tsx`, `README.md`, this tasks file; check-only, no other-owner edits                                                                                                                                                                                           |
+
+Build SHA-256: `dist/index.js` = `1fcb37595b2a81ca1d45bc1f9a5e99776ff9b88d3cdb19281525b4cc8caa5f6c`; `dist/tui.js` = `129a61c61c9f1728db0c61b700b18bff70e144207644f40027f792c64c3f794b`. These identify locally built artifacts, not an installed/running host.
+
+**Linux gate: BLOCKED, not executed.** Inspected existing `docs/operations/linux-verification.md` and both runner scripts. `verify-linux.ps1:2` accepts only `-Verify`; line 6 hard-codes `73f1f09bac9b306e2fce8c73f2bb1f38dfe95b19` and line 44 archives it. No documented candidate override exists. Running it would test stale code. No ops edit, alternate runner, image preparation or old-candidate rerun was performed. Next owner: CoS routes the operations owner to provide a supported pin for this candidate, then SDET runs affected controlled verification. Gap ID not supplied; correction attempts here: zero, scope requires owner correction. Linux cleanup: **N/A, no Linux resources created by C3**, not a newly verified cleanup of prior runs.
+
+**Assertion versus cleanup:** affected rendered/pure checks PASS; full regression FAIL; controlled Linux and real-host proof BLOCKED. Native renderer/adapter teardown reported no cleanup failures; final owned scratch query found **zero `cmon-*` fixture directories**. Worktree/dependencies/build/logs intentionally retained; no worktree removal/landing authorized.
+
+**Proof limits and readiness:** rendered checks prove the correction through the production rendered controls under the locked test host, not real OpenCode slot geometry/lifecycle/RPC transport or clean first-use/provider activity. TOK-09 remains synthetic-event integration proof, not a model call. Earlier user confirmation is not this correction's live acceptance. No waiver requested or inferred. Safe local-update readiness is **NOT CLEAN / pending**, because the full regression failed and current-candidate controlled Linux evidence is unavailable; no evidence justifies changing production to mask an unconfirmed host/timing issue. CoS routes diagnosis and runner correction; real-host gates remain separate. C3 stays unchecked. Subsequent finalization in this dispatch changes only this evidence document; code/tests/dependencies/configuration and observed target remain pinned, with no merge/release claim.
 
 ## Ordered checkpoints
 
