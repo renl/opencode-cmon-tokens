@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin/tui";
+import type { BoxRenderable } from "@opentui/core";
 import type { JSX } from "@opentui/solid";
-import { useTerminalDimensions } from "@opentui/solid";
 import {
   createEffect,
   createMemo,
@@ -46,9 +46,10 @@ const TOKEN_PARTIAL = "Partial: some token counts unavailable";
 /** Header label text, kept as one piece so it stays a single non-selectable run. */
 const MONTH_LABEL = "This month: ";
 const CONTROL_INDENT = 2;
-/** Two spaces between choices, four between the View and Unit groups. */
+/** Two spaces between choices. */
 const CHOICE_GAP = 2;
-const GROUP_GAP = 4;
+/** A breakdown name narrower than this would be unreadable, so the amount moves to its own line. */
+const MIN_NAME_CELLS = 4;
 
 export interface CostFeed {
   readonly state: Accessor<FeedState>;
@@ -106,14 +107,61 @@ export function glyph(open: boolean): string {
   return open ? "▼" : "▶";
 }
 
-/** Exact whole counts with ASCII comma grouping, never abbreviated or scaled. */
+interface TokenScale {
+  readonly suffix: string;
+  readonly divisor: number;
+}
+
+const BILLION: TokenScale = { suffix: "B", divisor: 1_000_000_000 };
+const MILLION: TokenScale = { suffix: "M", divisor: 1_000_000 };
+const THOUSAND: TokenScale = { suffix: "k", divisor: 1_000 };
+
+/** Largest scale that keeps the value at or above one whole unit; `B` caps larger amounts. */
+function tokenScale(count: number): TokenScale {
+  if (count >= BILLION.divisor) return BILLION;
+  if (count >= MILLION.divisor) return MILLION;
+  return THOUSAND;
+}
+
+/** The next larger scale, used when rounding reaches `1000` of the current unit. */
+function promotedScale(scale: TokenScale): TokenScale {
+  return scale === THOUSAND ? MILLION : BILLION;
+}
+
+/** Scaled value in hundredths: at most two decimals, nearest with halfway rounded up. */
+function scaledHundredths(count: number, scale: TokenScale): number {
+  return Math.round(count / (scale.divisor / 100));
+}
+
+/** Drop trailing fractional zeroes and a bare decimal point. */
+function formatHundredths(hundredths: number): string {
+  const whole = Math.trunc(hundredths / 100);
+  const fraction = hundredths % 100;
+  if (fraction === 0) return `${whole}`;
+  const decimals =
+    fraction % 10 === 0 ? `${fraction / 10}` : `${fraction}`.padStart(2, "0");
+  return `${whole}.${decimals}`;
+}
+
+/**
+ * Compact token count: exact below 1,000, otherwise the largest applicable decimal `k`/`M`/`B`
+ * with at most two decimals. Rounding up to `1000` promotes to the next scale, and `B` is the
+ * highest scale. Presentation only: stored, aggregated and ranked counts stay exact.
+ */
 export function formatTokens(count: number): string {
-  return count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  if (count < THOUSAND.divisor) return `${count}`;
+  let scale = tokenScale(count);
+  let hundredths = scaledHundredths(count, scale);
+  if (hundredths >= 100_000 && scale !== BILLION) {
+    scale = promotedScale(scale);
+    hundredths = scaledHundredths(count, scale);
+  }
+  return `${formatHundredths(hundredths)}${scale.suffix}`;
 }
 
 /**
  * One token amount. An unknown subtotal is unavailable, not zero; an incomplete one is marked `~`.
- * `1 tokens` keeps the fixed unit label.
+ * Exactly one is singular; every other amount, including abbreviated ones, keeps `tokens`.
  */
 export function tokenAmount(
   totalTokens: number | null | undefined,
@@ -121,7 +169,8 @@ export function tokenAmount(
 ): string {
   if (totalTokens === null || totalTokens === undefined)
     return TOKENS_UNAVAILABLE;
-  return `${complete === false ? "~" : ""}${formatTokens(totalTokens)} tokens`;
+  const label = totalTokens === 1 ? "token" : "tokens";
+  return `${complete === false ? "~" : ""}${formatTokens(totalTokens)} ${label}`;
 }
 
 function dollarsAmount(summary: Summary): string {
@@ -314,6 +363,8 @@ export interface Choice<Mode> {
   readonly text: string;
   readonly bold: boolean;
   readonly mode?: Mode;
+  /** Reserved cells for the widest selection; text keeps its own width so spare cells stay inert. */
+  readonly width: number;
 }
 
 const BREAKDOWN_LABELS: ReadonlyArray<readonly [Breakdown, string]> = [
@@ -327,109 +378,122 @@ export function toggleSegments(
   active: Breakdown,
 ): ReadonlyArray<Choice<Breakdown>> {
   return [
-    { text: "View", bold: false },
-    ...BREAKDOWN_LABELS.map(([mode, label]) =>
-      mode === active
-        ? { text: `[${label}]`, bold: true, mode }
-        : { text: label, bold: false, mode },
-    ),
+    { text: "View", bold: false, width: "View".length },
+    ...BREAKDOWN_LABELS.map(([mode, label]) => {
+      const bold = mode === active;
+      return {
+        text: bold ? `[${label}]` : label,
+        bold,
+        mode,
+        width: `[${label}]`.length,
+      };
+    }),
   ];
 }
 
 /** Unit choices; only the rendered text of a choice is a click target. */
 export function unitSegments(active: Unit): ReadonlyArray<Choice<Unit>> {
   return [
-    { text: "Unit", bold: false },
-    active === "dollars"
-      ? { text: "[$]", bold: true, mode: "dollars" }
-      : { text: "$", bold: false, mode: "dollars" },
-    active === "tokens"
-      ? { text: "[Tokens]", bold: true, mode: "tokens" }
-      : { text: "Tokens", bold: false, mode: "tokens" },
+    { text: "Unit", bold: false, width: "Unit".length },
+    {
+      text: active === "dollars" ? "[$]" : "$",
+      bold: active === "dollars",
+      mode: "dollars",
+      width: "[$]".length,
+    },
+    {
+      text: active === "tokens" ? "[Tokens]" : "Tokens",
+      bold: active === "tokens",
+      mode: "tokens",
+      width: "[Tokens]".length,
+    },
   ];
 }
 
-/** Width reserved for each group in its widest selection, so selecting never reflows the row. */
-const VIEW_WIDTH = "View".length + 8 + 8 + 11 + 3 * CHOICE_GAP;
-const UNIT_WIDTH = "Unit".length + 3 + 8 + 2 * CHOICE_GAP;
+export type ControlKind = "breakdown" | "unit";
 
-/** Greedy packing of whole choices, so a choice label is never split across rows. */
-function wrapChoices<Mode>(
-  segments: ReadonlyArray<Choice<Mode>>,
-  available: number,
-): ReadonlyArray<ReadonlyArray<Choice<Mode>>> {
-  const lines: Choice<Mode>[][] = [];
-  let line: Choice<Mode>[] = [];
-  let width = 0;
-  for (const segment of segments) {
-    const needed = (line.length === 0 ? 0 : CHOICE_GAP) + segment.text.length;
-    if (line.length > 0 && width + needed > available) {
-      lines.push(line);
-      line = [segment];
-      width = segment.text.length;
-      continue;
-    }
-    line.push(segment);
-    width += needed;
-  }
-  if (line.length > 0) lines.push(line);
-  return lines;
-}
-
-/** A control row holds the View group, the Unit group, or both when they share a row. */
-export interface ControlGroup {
-  readonly kind: "breakdown" | "unit";
+/** One selector row: either the View group or the Unit group, never both. */
+export interface ControlRow {
+  readonly kind: ControlKind;
   readonly segments: ReadonlyArray<Choice<Breakdown | Unit>>;
 }
 
-export interface ControlRow {
-  readonly groups: ReadonlyArray<ControlGroup>;
+/** Greedy packing of whole segments at reserved widths, so a control never splits across rows. */
+function packRow(
+  kind: ControlKind,
+  segments: ReadonlyArray<Choice<Breakdown | Unit>>,
+  available: number,
+): ControlRow[] {
+  const rows: ControlRow[] = [];
+  let current: Array<Choice<Breakdown | Unit>> = [];
+  let used = 0;
+  for (const segment of segments) {
+    const needed = (current.length > 0 ? CHOICE_GAP : 0) + segment.width;
+    if (current.length > 0 && used + needed > available) {
+      rows.push({ kind, segments: current });
+      current = [];
+      used = 0;
+    }
+    used += current.length > 0 ? CHOICE_GAP + segment.width : segment.width;
+    current.push(segment);
+  }
+  if (current.length > 0) rows.push({ kind, segments: current });
+  return rows;
 }
 
 /**
- * Lays the selector out from the terminal width in columns (the UX measure, not pixels). Both
- * groups share a row when they fit with their widest selection; otherwise the whole Unit group
- * moves below View, and a group too wide for the row wraps at choice boundaries. Like the existing
- * flex layout, this assumes the slot occupies the host column's full width.
+ * Selector rows from the panel's actual content width, not the terminal width. View and Unit never
+ * share a row, so each group wraps only between whole choices and keeps its reserved widths.
  */
 export function controlRows(
   width: number,
   breakdown: Breakdown,
   unit: Unit,
 ): ReadonlyArray<ControlRow> {
-  const available = Math.max(0, width - CONTROL_INDENT);
-  const view = toggleSegments(breakdown);
-  const units = unitSegments(unit);
-  if (available >= VIEW_WIDTH + GROUP_GAP + UNIT_WIDTH)
-    return [
-      {
-        groups: [
-          { kind: "breakdown", segments: view },
-          { kind: "unit", segments: units },
-        ],
-      },
-    ];
+  const available = Math.max(1, width - CONTROL_INDENT);
   return [
-    ...wrapChoices(view, available).map((segments) => ({
-      groups: [{ kind: "breakdown" as const, segments }],
-    })),
-    ...wrapChoices(units, available).map((segments) => ({
-      groups: [{ kind: "unit" as const, segments }],
-    })),
+    ...packRow("breakdown", toggleSegments(breakdown), available),
+    ...packRow("unit", unitSegments(unit), available),
   ];
 }
 
-/** The amount stays on the header line when it fits beside the glyph and label. */
+/** The amount stays on the header line when the glyph, label and whole amount fit. */
 function headerFits(width: number, amountText: string): boolean {
   return 1 + 1 + MONTH_LABEL.length + amountText.length <= width;
 }
 
-/** Label and amount share a row when both fit; otherwise the amount moves to its own indented line. */
-function breakdownFits(
-  width: number,
-  line: { label: string; amount: string },
-): boolean {
-  return CONTROL_INDENT + line.label.length + 1 + line.amount.length <= width;
+/** Cells left for a breakdown name after the indent, one separator and the intact amount. */
+function nameCells(width: number, amountText: string): number {
+  return width - CONTROL_INDENT - 1 - amountText.length;
+}
+
+/** Truncate only the name, ending with an ellipsis; amounts are never truncated or wrapped. */
+function fitName(name: string, cells: number): string {
+  if (name.length <= cells) return name;
+  if (cells <= 0) return "";
+  return `${name.slice(0, cells - 1)}…`;
+}
+
+/** One-line footer content, clipped only at its end to its own available width. */
+function clipFooter(text: string, width: number): string {
+  return [...text].slice(0, Math.max(0, width)).join("");
+}
+
+/**
+ * The panel's own content width, measured from the renderable the host actually lays out. The
+ * terminal width is not a substitute: a sidebar can be narrow inside a wide terminal. The callback
+ * runs inside the layout pass, so the reactive write waits for the next microtask.
+ */
+function usePanelWidth(): readonly [
+  Accessor<number>,
+  (this: BoxRenderable) => void,
+] {
+  const [width, setWidth] = createSignal(0);
+  const onSizeChange = function (this: BoxRenderable): void {
+    const measured = this.width;
+    queueMicrotask(() => setWidth(measured));
+  };
+  return [width, onSizeChange] as const;
 }
 
 function useCostBlock(context: Plugin.Context) {
@@ -447,20 +511,18 @@ export function CostSidebar(props: {
   const { feed, view, toggle, unitState, select } = useCostBlock(props.context);
   const theme = props.context.theme;
   const [breakdown, setBreakdown] = createSignal<Breakdown>("agent");
-  const dimensions = useTerminalDimensions();
+  const [panelWidth, onSizeChange] = usePanelWidth();
   const unit = (): Unit => unitState.unit;
   const amountText = (): string => amount(feed.state(), unit());
   const amountColor = (): string =>
     feed.state().kind === "error"
       ? theme.text.feedback.error.base
       : theme.text.base;
-  const rows = createMemo(() =>
-    controlRows(dimensions().width, breakdown(), unit()),
-  );
+  const rows = createMemo(() => controlRows(panelWidth(), breakdown(), unit()));
   const warning = createMemo(() => tokenWarning(feed.state(), unit()));
   /** Only a rendered choice changes state: labels and gaps have no mode. */
   const choose = (
-    kind: ControlGroup["kind"],
+    kind: ControlKind,
     mode: Breakdown | Unit | undefined,
   ): void => {
     if (mode === "agent" || mode === "model" || mode === "provider") {
@@ -471,9 +533,12 @@ export function CostSidebar(props: {
   };
 
   return (
-    <box>
+    <box
+      onSizeChange={onSizeChange}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
       <Show
-        when={headerFits(dimensions().width, amountText())}
+        when={headerFits(panelWidth(), amountText())}
         fallback={
           <box flexDirection="column" onMouseDown={toggle}>
             <box flexDirection="row" gap={1}>
@@ -485,13 +550,11 @@ export function CostSidebar(props: {
                 {": "}
               </text>
             </box>
-            <text
-              fg={amountColor()}
-              paddingLeft={CONTROL_INDENT}
-              wrapMode="char"
-            >
-              {amountText()}
-            </text>
+            <box paddingLeft={CONTROL_INDENT}>
+              <text fg={amountColor()} wrapMode="none">
+                {amountText()}
+              </text>
+            </box>
           </box>
         }
       >
@@ -504,7 +567,9 @@ export function CostSidebar(props: {
               <b>This month</b>
               {": "}
             </text>
-            <text fg={amountColor()}>{amountText()}</text>
+            <text fg={amountColor()} wrapMode="none">
+              {amountText()}
+            </text>
           </box>
         </box>
       </Show>
@@ -514,71 +579,79 @@ export function CostSidebar(props: {
             {(row) => (
               <box
                 flexDirection="row"
-                gap={GROUP_GAP}
+                gap={CHOICE_GAP}
                 paddingLeft={CONTROL_INDENT}
               >
-                <For each={row.groups}>
-                  {(group) => (
-                    <box flexDirection="row" gap={CHOICE_GAP}>
-                      <For each={group.segments}>
-                        {(segment) => (
-                          <text
-                            fg={theme.text.action.primary.base}
-                            selectable={false}
-                            onMouseDown={() => choose(group.kind, segment.mode)}
-                          >
-                            {segment.bold ? (
-                              <b>{segment.text}</b>
-                            ) : (
-                              segment.text
-                            )}
-                          </text>
-                        )}
-                      </For>
-                    </box>
+                <For each={row.segments}>
+                  {(segment) => (
+                    <Show
+                      when={segment.mode !== undefined}
+                      fallback={
+                        <text
+                          fg={theme.text.action.primary.base}
+                          selectable={false}
+                        >
+                          {segment.text}
+                        </text>
+                      }
+                    >
+                      <box
+                        width={segment.width}
+                        flexShrink={0}
+                        flexDirection="row"
+                      >
+                        <text
+                          fg={theme.text.action.primary.base}
+                          selectable={false}
+                          onMouseDown={() => choose(row.kind, segment.mode)}
+                        >
+                          {segment.bold ? <b>{segment.text}</b> : segment.text}
+                        </text>
+                      </box>
+                    </Show>
                   )}
                 </For>
               </box>
             )}
           </For>
           <Show when={warning()}>
-            <text
-              fg={theme.text.muted}
-              paddingLeft={CONTROL_INDENT}
-              wrapMode="word"
-            >
-              {warning()}
-            </text>
+            <box paddingLeft={CONTROL_INDENT}>
+              <text fg={theme.text.muted} wrapMode="word">
+                {warning()}
+              </text>
+            </box>
           </Show>
         </Show>
         <For each={breakdownLines(feed.state(), breakdown(), unit())}>
           {(line) => (
             <Show
-              when={breakdownFits(dimensions().width, line)}
+              when={nameCells(panelWidth(), line.amount) >= MIN_NAME_CELLS}
               fallback={
                 <box flexDirection="column">
-                  <text
-                    fg={theme.text.muted}
-                    paddingLeft={CONTROL_INDENT}
-                    truncate
-                  >
-                    {line.label}
-                  </text>
-                  <text
-                    fg={theme.text.muted}
-                    paddingLeft={CONTROL_INDENT * 2}
-                    wrapMode="char"
-                  >
-                    {line.amount}
-                  </text>
+                  <box paddingLeft={CONTROL_INDENT}>
+                    <text fg={theme.text.muted} wrapMode="none">
+                      {fitName(line.label, panelWidth() - CONTROL_INDENT)}
+                    </text>
+                  </box>
+                  <box paddingLeft={CONTROL_INDENT}>
+                    <text fg={theme.text.muted} wrapMode="none">
+                      {line.amount}
+                    </text>
+                  </box>
                 </box>
               }
             >
               <box flexDirection="row" gap={1} paddingLeft={CONTROL_INDENT}>
-                <text fg={theme.text.muted} flexGrow={1} truncate>
-                  {line.label}
+                <text
+                  fg={theme.text.muted}
+                  wrapMode="none"
+                  width={nameCells(panelWidth(), line.amount)}
+                >
+                  {fitName(line.label, nameCells(panelWidth(), line.amount))}
                 </text>
-                <text fg={theme.text.muted}>{line.amount}</text>
+                <text fg={theme.text.muted} wrapMode="none">
+                  {line.amount}
+                </text>
               </box>
             </Show>
           )}
@@ -592,17 +665,20 @@ export function CostFooter(props: {
   readonly context: Plugin.Context;
 }): JSX.Element {
   const { feed, view, toggle, unitState } = useCostBlock(props.context);
+  const [width, onSizeChange] = usePanelWidth();
+  const text = (): string =>
+    footerLine(feed.state(), view.open, unitState.unit);
   return (
-    <box onMouseDown={toggle}>
+    <box onSizeChange={onSizeChange} onMouseDown={toggle}>
       <text
         fg={
           feed.state().kind === "error"
             ? props.context.theme.text.feedback.error.base
             : props.context.theme.text.muted
         }
-        truncate
+        wrapMode="none"
       >
-        {footerLine(feed.state(), view.open, unitState.unit)}
+        {width() > 0 ? clipFooter(text(), width()) : text()}
       </text>
     </box>
   );

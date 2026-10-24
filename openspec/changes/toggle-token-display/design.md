@@ -2,7 +2,7 @@
 
 Add a read-only token projection to the existing summary and a session-only unit choice, without changing dollar accounting.
 
-- **Workflow / status:** Authorized `software-change`; architecture ready for test planning. Source semantics checked on 2026-10-23; no runtime verification claimed.
+- **Workflow / status:** Authorized `software-change`; compact-format/container-layout correction aligned on 2026-10-24, ready for SDET test updates. Source semantics checked on 2026-10-23. User reports the live panel works after the local plugin-load correction; this document claims no independent runtime verification.
 - **Owner:** Architect. PM remains primary author of the `cost-display` delta; this design owns the cross-component contract, not a second capability spec.
 - **Parents:** [Proposal](proposal.md), [product delta](specs/cost-display/spec.md), [current capability](../../specs/cost-display/spec.md).
 - **UI authority:** [UX reference](ux.md). Layout, wrapping, control hit targets and accessibility limitations remain defined there.
@@ -76,7 +76,7 @@ The existing response fields `revision`, `totalMicros`, `agents`, `models`, `pro
 | `tokens.models` | Array of `{model: string, totalTokens: number or null, complete: boolean}` |
 | `tokens.providers` | Array of `{provider: string, totalTokens: number or null, complete: boolean}` |
 
-All entry fields are required. Counts shall remain exact whole counts in summary, serialization and formatting; no rounding, unit scaling or monetary conversion is permitted. This extends the existing numeric transport; no token-category drilldown is exposed. `tokens.complete: true` forbids a NULL total or incomplete entries. A group's NULL subtotal requires its `complete: false`.
+All entry fields are required. Counts shall remain exact whole counts in storage, summary and serialization; presentation alone shall use the compact formatting below. No rounded/scaled values shall enter accounting, aggregation, RPC or ranking. This extends the existing numeric transport; no token-category drilldown is exposed. `tokens.complete: true` forbids a NULL total or incomplete entries. A group's NULL subtotal requires its `complete: false`.
 
 The summary shall return token arrays separately from dollar arrays; it shall not reorder/mutate dollar arrays or add markers into monetary fields. Sort token lists by numeric known subtotal descending, unavailable after all numeric values (including zero), then **binary ascending name order** for equal values or two unavailable values, matching existing dollar name comparison. Completeness is not an additional tie-breaker. Footer ranking shall use `tokens.agents`, never dollar order, for its top two and `+N`.
 
@@ -94,11 +94,21 @@ Both slots shall project their current ready summary using that shared unit. The
 
 | Token value state | Display |
 |---|---|
-| Numeric, complete | Exact comma-grouped integer plus ` tokens`, including `0 tokens` and `1 tokens` |
+| Numeric, complete | Compact decimal count plus ` token` for exactly one, otherwise ` tokens`, including `0 tokens` and `1 token` |
 | Numeric, incomplete | Same, prefixed `~`, including `~0 tokens` |
 | NULL or absent token support | `Tokens unavailable` (no `~` prefix) |
 
-Apply this per total and per breakdown entry. In token mode, any incomplete/unavailable monthly total shall show `Partial: some token counts unavailable` in the opened sidebar; never show it in dollar mode or the one-line footer. Empty complete summaries have no warning. Use ASCII comma digit grouping regardless of host locale. Follow [UX](ux.md) for widths, exact selectable values and footer trailing truncation; no K/M abbreviation, dropped sidebar digits or decimal counts. Header/footer collapse behavior remains independent of unit controls.
+Apply this per total and per breakdown entry, in both slots and open/collapsed states. Counts below 1,000 shall remain exact integers. Otherwise choose the largest applicable decimal suffix: `k` = 1,000, `M` = 1,000,000, `B` = 1,000,000,000. Round the scaled value to at most two decimal places, nearest with halfway rounded up; trim trailing fractional zeroes and the trailing decimal point. If rounding reaches `1000k` or `1000M`, promote and round the original count in the next unit. `B` is the highest suffix, including for larger counts. Use a decimal point, no grouping separators, and one space before the unit label, independently of host locale. The [product examples](specs/cost-display/spec.md#requirement-token-formatting-and-incomplete-history-are-explicit) govern boundaries, including `999,994` → `999.99k tokens`, `999,995` → `1M tokens` and `999,995,000` → `1B tokens`.
+
+Formatting shall not alter numeric ranking or group reconciliation; independently rounded displayed subtotals need not sum to the displayed total. Rounding alone shall never add `~`. In token mode, any incomplete/unavailable monthly total shall show `Partial: some token counts unavailable` in the opened sidebar; never show it in dollar mode or the one-line footer. Empty complete summaries have no warning. Unavailable values and legacy fallback remain unchanged.
+
+### Container layout contract
+
+Follow [UX](ux.md#width-adaptation-actual-container-character-cells) for exact packing, spacing, selectable values and footer trailing truncation. View and Unit shall occupy separate rows at every width, View first. Each label and complete choice, including brackets, shall remain an atomic, nonshrinking, non-word-wrapping segment. Reflow shall occur only between segments, with stable reserved selected-choice widths and hit targets limited to rendered choice text. Header/footer collapse behavior remains independent of unit controls.
+
+Header fit, control reflow and breakdown fit shall respond to the **actual sidebar content width**, after host padding/borders and before the panel's two-cell indent, not the full terminal column count. Actual container measurement or intrinsic container-constrained layout is acceptable; this contract prescribes neither a production helper nor a host API. At 45/40/22 available cells, including inside a wider terminal and after independent sidebar resize, controls and the specified compact amounts shall remain intact and nonoverlapping. Header amounts move intact to a continuation line when necessary. Breakdown amounts retain their marker/unit and separation from names; only names may truncate or move to a separate line under UX rules. Footer remains one line with its existing trailing truncation at its own available width; that truncation shall not apply to sidebar amounts.
+
+**Host evidence limit:** current `src/tui.tsx` uses terminal dimensions for all three fit decisions and therefore does not establish container-aware behavior. No new container measurement callback, dimension property or intrinsic wrapping API is verified by this correction: **[UNVERIFIED — requires source check]**. Before SDET/SE relies on any such external interface, CoS shall supply a bounded check of locked dependency source/declarations or official documentation and relevant real examples. The smallest proof is a rendered panel inside a narrower parent at fixed terminal width, resized with intact controls and coordinate-click targets. Use that as the correction's layout proof, not a new general-purpose host harness or approval gate. No new RPC/storage integration research is needed. Exceptional amounts too wide even for a dedicated line retain their full text per UX; whether the host clips that overflow is unverified and must be recorded, not claimed solved by guessed APIs. Widths below 22 cells are not a new guarantee.
 
 **Accessibility limit:** existing mouse-driven text controls provide no evidenced native focus/screen-reader contract. This change shall preserve host keyboard handling and shall not add guessed focus APIs, claim WCAG conformance, or invent shortcuts. Brackets/bold and explicit status text provide non-colour cues; terminal keyboard/screen-reader access remains unproven.
 
@@ -110,12 +120,18 @@ Required proof chain:
 
 1. **Ledger → summary:** full five-component vector above; mixed NULL permutations (especially cache-write NULL with known input/cache-read); all-NULL, known-zero partial, empty, multiple providers, failed/sub-agent/compaction and zero-cost rows; `[from,to)` edges; group reconciliation, group-specific completeness, deterministic ties and unavailable-last ordering. Summary reads must not write rows or change revision.
 2. **Summary → RPC → UI:** schema accepts old replies and serializes NULL/zero distinctly; dollar outputs/order/pricing markers and both cost-tool outputs remain unchanged for identical rows/catalog. Unknown prices with known tokens must not mark token mode partial.
-3. **Interaction:** actual rendered clicks both directions, no-op active/label/gap clicks, selection drag, independent breakdown/open state, shared footer unit/ranking after navigation/remount, restart default with persisted open preference retained, loading/error recovery, all coverage states, and 40-/22-column wrapping per UX.
+3. **Interaction:** actual rendered clicks both directions, no-op active/label/gap clicks, selection drag, independent breakdown/open state, shared footer unit/ranking after navigation/remount, restart default with persisted open preference retained, loading/error recovery, all coverage states, and 45-/40-/22-cell actual-container layouts per UX. Verify rendered frames and coordinate clicks inside a wider terminal, including sidebar resize without terminal resize and all six unit/breakdown selections; helper-only width assertions are insufficient. Cover compact boundaries, half-up rounding, promotion, trimmed zeroes, singular/plural, large B values, partial/unavailable/empty states, equal formatted strings with different numeric ranks, long-name truncation/stacking and footer clipping.
 4. **First useful workflow:** clean isolated installation → open zero token view → normal supported model activity → existing recorder/store/notification/RPC refresh populates both views → return to identical dollars. Injected summary fixtures alone do not prove recording integration. Preserve the database and verify no unit-switch accounting mutations.
 
 Risks are bounded: unknown historical provenance remains unrecoverable; raw-NULL loss in existing convenience mappings must be avoided; session sharing and narrow-terminal hit targets need runtime proof. Containerized checks are the default; any required native terminal exception and real external-boundary evidence belong in SDET's test plan, not an implied waiver. No tests, runtime spike or e2e pass is claimed by this document.
 
 **Handoff:** CoS should route to `@sdet-engineer` for task/test planning and boundary-proof definition in the existing change worktree; implementation dispatch remains with CoS after SDET readiness. PM may reconcile stale source-blocker status and link this contract in their owned artifacts; no product scope change or separate Architect-authored capability delta is needed.
+
+### Correction handoff — 2026-10-24
+
+This correction changes presentation only. The user confirms live panel operation after correcting the local plugin reference to the built **`dist` directory**, not an individual entry file. README/install guidance correction is pending with its owner; no installation, README or configuration edits are authorized here. No unrelated RPC/accounting changes are required.
+
+CoS shall route SDET to update existing tasks/tests for compact formatting and the actual-container frame/click proof above, preserving dollar/tool regression coverage and established token semantics. Reuse the current worktree and existing verification approach; no new worktree, product approval, general harness, live model call or repeated accounting spike is required for this presentation correction. Resolve any newly needed external layout interface through the scoped source check above before relying on it. Prior review findings below are historical; they do not independently establish current candidate evidence or reopen resolved blockers. Independent verification remains against the corrected candidate under the existing change lifecycle, without expanding this correction's scope.
 
 ## Architecture review — 2026-10-23
 
@@ -152,3 +168,24 @@ Return to CoS: SDET may record this confirmation as checkpoint 1 readiness, afte
 If implementation reveals an actual memory/RPC incompatibility, CoS shall first route a bounded source-grounded spike, not the full first-use workflow: one isolated supported TUI with two independently mounted consumers of `unit`, a synchronous update visible to both and retained through remount/reload, reset after exit, and one unchanged `summary` input exercised with legacy and NULL/zero replies over real host RPC. Minimum evidence: pinned runtime/plugin, actual host observations and reply values, command/timeout/exit status, and verified cleanup. No provider activity is needed for this diagnostic spike; it is still required for final first-use verification.
 
 If that spike or final verification needs environment help, request DevOps scope **through CoS** for only an isolated locked-runtime terminal/session and data/config paths, bounded readiness/total timeout/logs and process-tree teardown. Containerized verification remains the default; a native exception needs the documented representability rationale and lifecycle. Credentials/model access require separate scoped authorization; never inspect global configuration or user ledgers. No environment action or agent dispatch is authorized by this review.
+
+## Presentation correction review — 2026-10-24
+
+Scoped static review of SDET setup `89d9943ee69b4bb8dbcbda234a5f223052d7f9b7`: tasks correction block, five affected test files, approved product/UX presentation rules, and installed locked renderer declarations/source. No commands/tests, git operations or independent candidate verification performed; reported RED/pass counts remain SDET evidence.
+
+### Boundary fidelity: ACCEPT
+
+- TOK-20 uses the actual locked `RenderableOptions.onSizeChange?: (this: T) => void`, measured `width`, and Solid box `ref` contracts. Core layout assigns measured width before invoking the visible resize callback (`Renderable.d.ts:31,65,86`; `chunk-node-wp7ct2m6.js:1113–1131,1163–1165`); Solid `elements.d.ts:7–9,24–26,38–40` admits those props. No width callback argument or new host interface is invented. This closes the source-check prerequisite for this optional strategy only; hidden/zero-width behavior and real host padding remain unproved.
+- The probe is explicitly test-only, not a production dependency or mandated layout strategy. Existing formatting exports/component boundaries are exercised without requiring new private helpers. Exact frame coordinates implement UX's prescribed stable packing, not private production structure. RPC/accounting/storage interfaces remain unchanged.
+- TOK-16 renders actual nested 45/40/22-cell containers inside a fixed 120-cell terminal, verifies all six selections and independent resize, and checks control events do not reach the parent or alter open state. Sidebar-only frames prevent footer text from masking broken sidebar output. TOK-17/18 cover intact amounts and name truncation/stacking; TOK-21 separately covers footer clipping.
+- TOK-14/15/19 preserve the approved compact rounding/promotion/labels and exact underlying RPC counts/ranking. No accounting formula or host lifecycle claim is reopened by this correction.
+
+### Decomposition fidelity: ACCEPT — spacing correction confirmed 2026-10-24
+
+C1 → reviewed setup → C2 presentation → C3 independent pinned-candidate verification is correctly ordered. Fixtures are run-isolated; retained TOK-09 subscribes before events; real-host proof is not an implementation prerequisite. Scoped static confirmation of submitted correction `188bd5687d05b7641228a5da617ca1db2d4f4ec1`, limited to `src/tui.click.test.tsx` and the tasks correction record, resolves the sole spacing finding. Boundary fidelity remains ACCEPT; no broader new review is needed.
+
+| Owner / location | Confirmed resolution |
+|---|---|
+| SDET — `src/tui.click.test.tsx:185–194`, “Controls still work”; tasks “Scoped assertion correction” | Exact expectation is now `View  Agents    Models    [Providers]`, consistent with the Providers assertion at lines 102–104 and the approved reserved-width spacing. The coordinate Providers click and header-click collapse assertion remain intact. Tasks records the gap, correction and expected presentation RED without claiming a candidate pass. |
+
+**Readiness:** READY for C2 presentation implementation through CoS; no further SDET setup or architecture review is required for this resolved gap. No contract change, private implementation prescription, new research/harness or accounting review is required. Only this design disposition changed; no tests or git operations were run. Return to CoS for bounded implementation dispatch. Final independent SDET verification of the implemented immutable candidate and unresolved real-host gates remain required before sync/archive/merge. This review grants no feature acceptance or finalization authorization.

@@ -2,10 +2,10 @@
 
 Define panel behavior for retaining dollars alongside a token view.
 
-- **Status:** Accepted product scope for downstream elaboration; PM is primary author of this product-behavior delta. Source-grounded token formula remains an implementation blocker.
+- **Status:** Accepted product scope, including user-authorized compact-formatting and narrow-sidebar readability correction; PM is primary author.
 - **Parent:** [Proposal and direction check](../../proposal.md).
-- **Covered outcomes:** Unit selection, comparable breakdowns, honest token coverage.
-- **Decision needed:** No unresolved product decision or additional user sign-off; Architect must establish the source-grounded token formula before implementation.
+- **Covered outcomes:** Unit selection, comparable breakdowns, honest token coverage, compact amounts and readable narrow controls.
+- **Decision needed:** None; no additional user sign-off. Existing source-grounded counting obligations remain unchanged.
 - **Read next:** Architect's subsequent contract; no wire format is prescribed here.
 
 ## MODIFIED Requirements
@@ -106,6 +106,16 @@ The opened, ready sidebar SHALL offer separate clickable `$` and `Tokens` choice
 - **WHEN** the active unit choice, selector label or spacing is clicked
 - **THEN** neither the unit nor the open/closed state changes
 
+### Requirement: Narrow-sidebar controls remain readable
+
+At an available sidebar content width of 45 character cells, the opened, ready panel SHALL keep every unit and breakdown choice readable, identifiable and clickable in both dollar and token modes. Control labels and individual choices SHALL NOT break midword, overlap or interleave with other controls. Selected-state brackets SHALL stay with their choice. Breakdown names and amounts SHALL remain visually distinct without overlap; each amount SHALL remain intact. UX SHALL determine the exact layout and treatment of long names, rather than preserving a layout that fragments labels.
+
+#### Scenario: Readable controls and amounts in a narrow sidebar
+
+- **GIVEN** a ready sidebar with 45 character cells of content width and token amounts in the millions and billions
+- **WHEN** the user opens the panel and switches between dollar/token units and agent/model/provider breakdowns
+- **THEN** all choices remain readable and operable, no control word splits across lines, selected choices remain identifiable, and each displayed amount stays intact and separate from its name
+
 ### Requirement: Unit choice is shared for the current TUI session
 
 The unit SHALL default to dollars on every TUI restart, without altering persisted open/closed state. A unit change SHALL apply to both sidebar and footer, survive refresh, navigation and collapse/reopen within the session, and leave breakdown selection independent.
@@ -142,7 +152,11 @@ The token view SHALL cover the same monthly rows and attribution as the dollar v
 
 ### Requirement: Token formatting and incomplete history are explicit
 
-Token values SHALL use exact whole counts with comma digit grouping, no dollar sign, decimals or K/M abbreviations, and a `tokens` unit label (for example `1,234 tokens`). Available non-overlapping counts SHALL contribute to a known subtotal even when other counts are missing. If any counts needed for a full total are unknown, the total SHALL have a `~` prefix and the opened sidebar SHALL explain `Partial: some token counts unavailable`. Affected breakdown amounts SHALL also carry `~`.
+All token amounts in the sidebar and home footer, including collapsed totals and every breakdown, SHALL use the same compact decimal formatting with no dollar sign. Counts below 1,000 SHALL remain exact whole numbers. Larger counts SHALL use `k` for thousands (1,000), `M` for millions (1,000,000) and `B` for billions (1,000,000,000); `B` means billion, not million. Choose the largest applicable suffix, round its scaled value to at most two fractional digits (nearest, halfway rounded up), and remove trailing fractional zeroes and any trailing decimal point. If rounding produces `1000k` or `1000M`, promote to the next suffix and round there instead. `B` is the highest suffix; larger amounts remain expressed in billions. Use a decimal point, no digit-grouping separators, and a space before the unit label: `1 token` for exactly one, otherwise `tokens` (including abbreviated amounts). This supersedes the earlier exact-whole-count display requirement.
+
+Formatting SHALL NOT change recorded counts, computed totals, aggregation, ranking, dollar values or reporting tools. Reconciliation and ranking SHALL use underlying counts, not rounded display strings; independently rounded displayed breakdown amounts need not sum exactly to the displayed total. Rounding alone SHALL NOT add a partial-coverage marker.
+
+Available non-overlapping counts SHALL contribute to a known subtotal even when other counts are missing. If any counts needed for a full total are unknown, the total SHALL have a `~` prefix and the opened sidebar SHALL explain `Partial: some token counts unavailable`. Affected breakdown amounts SHALL also carry `~`.
 
 If no token counts are available for existing rows, the affected total or breakdown amount SHALL instead say `Tokens unavailable`, not zero. An older server with no token summary SHALL receive the same unavailable treatment without throwing. Completeness SHALL follow token availability, not pricing availability: existing pricing-completeness indicators SHALL continue unchanged in dollar mode and SHALL NOT alone mark token mode incomplete. Token mode SHALL NOT write guessed counts into historical rows.
 
@@ -151,6 +165,38 @@ If no token counts are available for existing rows, the affected total or breakd
 - **GIVEN** some monthly usage is known and some required counts are unknown
 - **WHEN** Tokens is selected
 - **THEN** the known subtotal and affected breakdown subtotals have `~`, and the opened sidebar explains the missing counts
+
+#### Scenario: Compact formatting is consistent across panel locations
+
+- **WHEN** available counts are displayed in a sidebar or footer total or breakdown
+- **THEN** they follow these examples:
+
+| Recorded count | Display |
+| --- | --- |
+| 0 | `0 tokens` |
+| 1 | `1 token` |
+| 999 | `999 tokens` |
+| 1,000 | `1k tokens` |
+| 1,234 | `1.23k tokens` |
+| 1,235 | `1.24k tokens` |
+| 1,200 | `1.2k tokens` |
+| 999,994 | `999.99k tokens` |
+| 999,995 | `1M tokens` |
+| 999,995,000 | `1B tokens` |
+| 590,977,798 | `590.98M tokens` |
+| 1,578,717,226 | `1.58B tokens` |
+
+#### Scenario: Rounding does not change ranking or imply missing history
+
+- **GIVEN** complete counts of 1,234 and 1,233 for two breakdown entries
+- **WHEN** Tokens is selected
+- **THEN** both display `1.23k tokens` without `~`, but the entry with 1,234 ranks first regardless of name
+
+#### Scenario: Compact partial subtotal retains its marker
+
+- **GIVEN** a known subtotal of 1,578,717,226 with some required counts unknown
+- **WHEN** Tokens is selected
+- **THEN** the total displays `~1.58B tokens`, affected breakdown amounts retain `~`, and the partial-history explanation remains visible
 
 #### Scenario: All counts unavailable or older server
 

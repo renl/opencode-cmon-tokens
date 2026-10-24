@@ -7,7 +7,7 @@ This fork adds a clickable `$` / `Tokens` selector to the monthly panel. The fea
 <img width="400" height="124" alt="Monthly cost panel showing this month's total and per-agent dollar amounts" src="https://github.com/user-attachments/assets/a62db5d4-4a1a-486d-9880-f5c43b232b2b" />
 
 - **Server plugin** (`.`): records every completed or failed model step and every compaction into `~/.local/share/opencode/cmon.db` (WAL, safe for several opencode processes), keyed by message ID. On first start it backfills up to 6 months from opencode's own `opencode.db` (read-only). Rows older than 6 calendar months are pruned on startup and every 24 h.
-- **TUI plugin** (`./tui`): a collapsible block in the sidebar and the home footer. Wrapped by default: `▸ This month: $12.34`. Opened: cost per agent. Click the header to toggle; the open/closed state is shared and persisted. In the sidebar, the opened block has a `View [Agents] Models Providers` row and a `Unit [$] Tokens` row: click a View tab to show cost per agent, per model id, or per provider (not persisted; starts at Agents). The footer always lists agents, whichever View tab the sidebar uses. Click `$` or `Tokens` to switch the header, sidebar breakdown and footer between dollars and exact token counts. Token amounts use comma-grouped whole numbers and token ordering; they are never rounded or shortened to K/M. The unit is shared for the current TUI session and is not persisted, so a restart returns to dollars. Switching units keeps the panel open and the current View tab; the View tab itself starts at Agents again after a restart. Dollar values and their `~` pricing marker are unchanged.
+- **TUI plugin** (`./tui`): a collapsible block in the sidebar and the home footer. Wrapped by default: `▸ This month: $12.34`. Opened: cost per agent. Click the header to toggle; the open/closed state is shared and persisted. In the sidebar, the opened block has a `View [Agents] Models Providers` row and a `Unit [$] Tokens` row: click a View tab to show cost per agent, per model id, or per provider (not persisted; starts at Agents). The footer always lists agents, whichever View tab the sidebar uses. Click `$` or `Tokens` to switch the header, sidebar breakdown and footer between dollars and token counts. Counts below 1,000 stay exact; larger amounts are compact decimals (`1.23k`, `590.98M`, `1.58B`, `1 token`), rounded to at most two decimals for display only, while ordering and totals use the exact stored counts. The panel measures its own sidebar width, so the View and Unit rows and the amounts stay whole and clickable in a narrow sidebar; long breakdown names shorten first. The unit is shared for the current TUI session and is not persisted, so a restart returns to dollars. Switching units keeps the panel open and the current View tab; the View tab itself starts at Agents again after a restart. Dollar values and their `~` pricing marker are unchanged.
 
 Token totals add the five stored, disjoint categories once each: input, cache read, cache write, output and reasoning. Stored input already excludes cached tokens and stored output already excludes reasoning, so nothing is subtracted twice. An incomplete total gets `~` (some stored token counts are unavailable, not unknown prices), and `Tokens unavailable` means no counts are available at all, for example on an older server. In the opened sidebar, `Partial: some token counts unavailable` explains incomplete or unavailable token history. An empty month on a token-capable server shows `0 tokens` without a partial marker.
 
@@ -30,14 +30,14 @@ Not tracked: title-generation cost (opencode does not deliver that event to plug
 
 ## Install
 
-Keep the install directory: the global config loads it in place, and updates are applied there.
+Keep the install directory: the global config loads its built `dist` directory in place, and updates are applied there.
 
 Prerequisites:
 
 - OpenCode V2 with plugin API 2.0 or newer.
 - Git, Bun and Node.js 22.5 or newer. Bun runs the install/build scripts; the TUI build runs under Node. The recorded checks used Bun 1.4.3 and Node 22.23.1.
 
-The package exports `src/index.ts` as the server entry and `src/tui.tsx` as the TUI entry. Point the config at the package directory, not at `dist/index.js`; the build type-checks the sources and produces `dist/`, but opencode resolves the package exports.
+Point the config at the built `dist` directory, not at the checkout root and not at `dist/index.js`. For a local directory, opencode loads the server, TUI and RPC entry files directly from that directory; it does not use the root package exports. The `dist` directory contains `index.js` (server), `tui.js` (TUI) and `rpc.js` (RPC), so one entry loads both the server and the panel. The checkout root has none of those files, so the plugin does not load and the panel does not appear. `dist/index.js` is the server entry only, so it records cost but has no panel. Run `bun install --frozen-lockfile` and `bun run build` before adding the config entry; the path does not work until `dist` exists.
 
 ### Windows PowerShell
 
@@ -72,7 +72,7 @@ Windows:
 {
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
-    "file:///C:/Users/<you>/.local/share/opencode/plugins/opencode-cmon-tokens"
+    "file:///C:/Users/<you>/.local/share/opencode/plugins/opencode-cmon-tokens/dist"
   ]
 }
 ```
@@ -83,18 +83,18 @@ macOS and Linux:
 {
   "$schema": "https://opencode.ai/config.json",
   "plugins": [
-    "file:///home/<you>/.local/share/opencode/plugins/opencode-cmon-tokens"
+    "file:///home/<you>/.local/share/opencode/plugins/opencode-cmon-tokens/dist"
   ]
 }
 ```
 
-On macOS, use `/Users/<you>/...` instead of `/home/<you>/...`. If you installed elsewhere or set `XDG_DATA_HOME`, point the entry at that actual directory. Use the `file://` URL on Windows; it avoids JSON backslash escaping.
+On macOS, use `/Users/<you>/...` instead of `/home/<you>/...`. If you installed elsewhere or set `XDG_DATA_HOME`, point the entry at that actual directory's `dist` subdirectory. Use the `file://` URL on Windows; it avoids JSON backslash escaping.
 
-One entry is enough: this package exports both `.` (server) and `./tui` (TUI), so opencode loads both from the single `plugins` entry. Do not add it to `cli.json` as well. Remove any earlier cmon entry (the original package, a path to its `dist`, or a separate TUI entry) so the plugin is not loaded twice.
+One entry is enough: the `dist` directory contains the server, TUI and RPC entries, so opencode loads both the server and the panel from the single `plugins` entry. The TUI auto-loads; do not add it to `cli.json` as well. Remove any earlier cmon entry (the original package, the checkout root, or a separate TUI entry) so the plugin is not loaded twice.
 
-Apply the change with `/reload` in the TUI (or `opencode reload` from a shell). If the block does not appear, restart opencode; changes to a local dependency checkout may not hot-reload.
+Apply the change with `/reload` in the TUI (or `opencode reload` from a shell). If the block does not appear, check that the `plugins` entry ends in `/dist` and not the checkout root or `dist/index.js`. Then confirm `dist` exists and is current by running `bun install --frozen-lockfile` and `bun run build` in the install directory. After that, restart opencode; changes to a local plugin directory may not hot-reload.
 
-Optional server options use the object form of the same entry: `{"package": "file:///...", "options": {"dbPath": "/path/cmon.db", "sourceDbPath": "/path/opencode.db"}}`. The default ledger is `~/.local/share/opencode/cmon.db`; the default source is `~/.local/share/opencode/opencode.db`.
+Optional server options use the object form of the same entry: `{"package": "file:///path/to/opencode-cmon-tokens/dist", "options": {"dbPath": "/path/cmon.db", "sourceDbPath": "/path/opencode.db"}}`. The default ledger is `~/.local/share/opencode/cmon.db`; the default source is `~/.local/share/opencode/opencode.db`.
 
 ### Update
 
@@ -122,7 +122,7 @@ bun install --frozen-lockfile
 bun run build
 ```
 
-Then run `/reload` or `opencode reload`; restart opencode if the old TUI code is still shown.
+The config entry keeps pointing at the same `dist` directory; rebuilding is what updates the loaded code. Then run `/reload` or `opencode reload`; restart opencode if the old TUI code is still shown.
 
 ### Uninstall
 

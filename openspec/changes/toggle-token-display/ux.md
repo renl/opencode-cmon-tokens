@@ -3,35 +3,54 @@
 - **Owner:** `@ux-ui-designer`; workflow: `software-change`, UX specification stage.
 - **Parent / behavior authority:** [Proposal](proposal.md), [product delta](specs/cost-display/spec.md).
 - **Scope:** Existing terminal sidebar and home footer only; retain host theme, dollar formatting, recording, tools, refresh/retry and persisted open/closed behavior. This is the change-local, separately owned UX reference; architecture should link here rather than copy it.
-- **Read next:** Architect's source-grounded token formula and summary contract (pending). No formula is defined here.
+- **Read next:** Architect's [design contract](design.md) for token semantics and summary behavior. No formula is defined here.
 - **Inputs:** `src/tui.tsx`, `src/tui.test.ts`, `src/tui.click.test.tsx`. No `docs/ux-ui-spec/README.md` exists in this worktree; this dispatch authorizes only this file, not a new documentation directory.
 
 ## Layout and hierarchy
 
 Keep the block first in the sidebar. Header remains `▶ This month: $12.34` when collapsed, `▼` when opened. Only the amount changes units. Keep the current two-column indent beneath the header.
 
-In the opened, ready sidebar, place a compact **Unit** group immediately after the existing **View** group, in reading order. Example when sufficient inner width is available:
+In the opened, ready sidebar, put **View** and **Unit** on separate rows at every width, View first. Example at 45 available container columns:
 
 ```text
-▼ This month: 1,234,567 tokens
-  View  [Agents]  Models  Providers    Unit  $  [Tokens]
-  build                             1,000,000 tokens
-  explore                             234,567 tokens
+▼ This month: 1.58B tokens
+  View  [Agents]  Models  Providers
+  Unit  $  [Tokens]
+  build                          1.58B tokens
+  explore                          1M tokens
 ```
 
-- Use two spaces between segments, four between groups; no surrounding panel, icons or new decorative treatment. Preserve existing `View` labels verbatim.
+- Use two spaces between control segments; no blank row between groups, surrounding panel, icons or new decorative treatment. Preserve existing `View` labels verbatim.
 - Active choice is bracketed **and bold**: `[$]` or `[Tokens]`. Inactive choice is bare `$` or `Tokens`. Reuse existing action text styling for controls, base text for header amounts and muted text for breakdowns. Selection must remain clear in monochrome.
 - Both groups precede any coverage explanation, then breakdown rows. No selector in the footer or collapsed block.
-- Keep amounts right-aligned when each label and complete amount fit on one row; truncate long breakdown names before sacrificing amount space.
+- Keep complete amounts right-aligned, with at least one blank cell separating name and amount. Names may truncate with `…`; amounts, markers and unit labels may not. Keep `tokens` on every token amount: the product delta requires it, so omitting repeated labels is not authorized.
 
-## Width adaptation (terminal columns, not pixel breakpoints)
+## Width adaptation (actual container character cells)
 
-- **Both groups fit:** use the shared control row above. Measure the full groups including brackets and indent; reserve enough room for either active choice so selecting a unit does not make the layout jump.
-- **Groups do not fit together:** move the entire Unit group to its own indented row immediately below View. At a 40-column sidebar this is the expected layout. Do not squeeze labels or reduce the existing inter-choice gaps.
-- **A group itself does not fit:** wrap at segment boundaries, preserving order, indent and complete clickable choice labels. At 22 columns, all controls must remain reachable on continuation rows; no horizontally clipped choice.
-- **Header amount does not fit:** retain glyph and `This month:` on the first line; move the complete amount to an indented continuation line. This also applies when collapsed. Preserve the existing single-line dollar header at 22 columns when it fits.
-- **Breakdown amount does not fit beside a useful name:** use a name line followed by an indented amount line. Wrap `tokens` onto a continuation line if needed. If even the numeric string exceeds available width, hard-wrap it without removing/reordering digits, commas or `~`. Never substitute K/M notation, round, or ellipsize sidebar amounts. Coverage text wraps normally.
-- Footer retains its existing **single line with trailing truncation** at the available host width; do not enlarge it. Construct exact counts before clipping, with total first. Narrow-footer clipping is not numeric abbreviation; the expanded sidebar is where full values remain readable and selectable.
+- **Measure the sidebar, not the terminal:** width means the panel's available content cells after host sidebar padding/borders, before this panel's two-cell indent. Header, controls and breakdowns must all respond to that same actual container width, including when the terminal is much wider or the sidebar resizes independently.
+- **Atomic controls:** each label (`View`, `Unit`) and each complete choice, including selected brackets, is nonshrinking and non-word-wrapping. Never split `Agents`, `Providers` or `Tokens` into letters, clip a bracket, overlap controls, or shrink controls to fit. Extra rows occur only between whole segments; keep every rendered choice clickable on its displayed row.
+- **Stable packing:** reserve each choice's bracketed width even when inactive; reserved blank cells are not click targets. Pack each group in order with two-cell gaps, moving a whole segment to the next two-cell-indented row if needed. Never share a View row with Unit. This reserves 37 cells for View and 19 for Unit, plus the two-cell indent, so both groups individually fit at 45 and 40 columns regardless of selection.
+- **At 22 columns:** View continues over three rows under this packing rule; Unit still fits on one. Example (reserved blank cells may add spacing):
+
+  ```text
+  ▼ This month:
+    1.58B tokens
+    View  [Agents]
+    Models
+    Providers
+    Unit  $  [Tokens]
+    build   1.58B tokens
+  ```
+
+- **At 40 columns:** same two control rows as the 45-column example, not a combined row. `▼ This month: 1.58B tokens` fits on one line; names receive less space, but amounts remain complete. These are container widths even on a 120-column terminal.
+- **Header amount does not fit:** retain glyph and `This month:` on the first line; move the complete amount to a two-cell-indented continuation line. Applies when open or collapsed. Keep the existing single-line dollar header at 22 columns when it fits.
+- **Long breakdown names:** allocate the intact amount first, then one separating cell, then the name. Truncate only the name with `…` if necessary. If fewer than four name cells remain, show the name on its own two-cell-indented line (truncate to that width), then the complete amount on the following two-cell-indented line. Never let name wrapping consume amount or control space. `Tokens unavailable` is also an intact amount. Coverage explanation wraps at word boundaries below all controls.
+- At the specified 45/40/22 widths, every control and the compact million/billion examples fit intact. If an exceptional amount cannot fit even alone (for example an unusually large dollar value), preserve its complete text on a dedicated overflow line rather than character-wrap or abbreviate dollars; Architect must identify any host clipping limitation. Below 22 columns is not a new guaranteed layout target.
+- Footer retains its existing **single line with trailing truncation** at its own available host width; do not enlarge it. Format compact token amounts before clipping, total first. Sidebar amounts must not inherit footer truncation.
+
+### Source-grounded correction boundary
+
+`src/tui.tsx` currently bases control packing, header fit and breakdown fit on terminal dimensions, explicitly assuming the slot fills the host column. Its control text is not explicitly protected against shrinking. This is consistent with the reported fragmentation in a narrower sidebar; it does not prove the screenshot's exact cause. Existing `src/tui.click.test.tsx` renders the panel at the renderer's full width, so it does not establish correct behavior in a narrow container inside a wider terminal. Correction acceptance must cover that nested-container case, not just change a width arithmetic test.
 
 ## Interaction and session state
 
@@ -48,30 +67,33 @@ In the opened, ready sidebar, place a compact **Unit** group immediately after t
 |---|---|---|
 | Loading | `…`, same glyph/open state | Hide both control groups and breakdowns. Retain the session unit internally. |
 | Request error | `Error`, existing error text colour | Hide both control groups and breakdowns. Existing automatic retries remain; no new retry control. Recovery restores selected unit and breakdown. |
-| Ready, complete tokens | `1,234 tokens` | Unit selector available; every breakdown amount includes `tokens`, including `1 tokens` to keep the specified fixed label. |
-| Ready, partially known tokens | `~1,234 tokens` | Show `Partial: some token counts unavailable` immediately below controls. Prefix only affected breakdown subtotals with `~`; unaffected entries stay unmarked. |
+| Ready, complete tokens | `1.23k tokens` | Unit selector available; every breakdown includes the unit: `1 token` for exactly one, otherwise `tokens`. |
+| Ready, partially known tokens | `~1.23k tokens` | Show `Partial: some token counts unavailable` immediately below controls. Prefix only affected breakdown subtotals with `~`; unaffected entries stay unmarked. |
 | Existing usage, no available counts | `Tokens unavailable` | Keep selector available so dollars remain reachable. Affected breakdown values use `Tokens unavailable`, never `0 tokens`. Show the same partial-coverage explanation; no request-error styling. |
 | Older server without token summary | `Tokens unavailable` | Same unavailable treatment. Do not invent missing breakdown entries or throw; returning to dollars restores existing usable content. |
 | Empty month, first run or after retention/month rollover | `$0.00` or `0 tokens` | Empty breakdown, selectors available, no partial warning. Normal model activity populates first-run usage through the existing recording and refresh path; no setup form or disabled primary action. |
 | Dollar mode | Existing dollar values and total-only pricing `~` | No token-coverage warning or token markers. Unknown pricing alone must not mark complete token counts partial. |
 
-Unavailable/partial token history is a ready state, not a failed request. Token counts are exact grouped whole numbers; examples are illustrative, not formula definitions. No success toast: updated amounts, order and selected brackets provide feedback.
+Unavailable/partial token history is a ready state, not a failed request. All sidebar/footer token amounts follow the product delta: exact integers below 1,000; decimal `k`/`M`/`B` thereafter, nearest rounding (half up) to at most two decimals, trimmed zeroes, no grouping commas. Promote rounded `1000k` to `1M` and `1000M` to `1B`; `B` is the highest suffix. Examples: `999 tokens`, `1k tokens`, `1.2k tokens`, `590.98M tokens`, `1.58B tokens`. Keep `~` attached before the number only for missing coverage, not rounding. Ranking and reconciliation use underlying counts, not rounded text; displayed subtotals need not sum exactly. No success toast: updated amounts, order and selected brackets provide feedback.
 
 ## Footer
 
-- Closed example: `▶ 1,234 tokens this month`.
-- Open example: `▼ 1,234 tokens · build 1,000 tokens · explore 200 tokens · +1`.
+- Closed example: `▶ 1.23k tokens this month`.
+- Open example: `▼ 1.23k tokens · build 1k tokens · explore 200 tokens · +1`.
 - Always use the selected unit for total and agent amounts, and that unit's top two agents, regardless of sidebar breakdown choice. Retain existing separators, `+N`, glyph and open-state sharing. Apply partial/unavailable formatting per value; keep the explanatory sentence in the sidebar only.
 
 ## Terminal accessibility and control states
 
-- Preserve readable plain-text labels and exact selectable amounts. Brackets/bold convey selection without colour; `Error`, `~` and the coverage sentence carry status without colour. Use host theme roles, not hard-coded colours; verify text contrast against the host background (AA target 4.5:1). No animation or hover-only information.
+- Preserve readable plain-text labels and selectable displayed amounts. Brackets/bold convey selection without colour; `Error`, `~` and the coverage sentence carry status without colour. Use host theme roles, not hard-coded colours; verify text contrast against the host background (AA target 4.5:1). No animation or hover-only information.
 - **Hover / pressed:** retain the existing View controls' stable text styling; no layout shift or transient unit change. **Selected:** bracketed/bold. **Unavailable controls:** omitted during loading/error rather than misleadingly disabled; available in empty/partial/unavailable ready states.
 - Current supplied controls are mouse-driven terminal text, not native focusable widgets: no plugin tab stops, keyboard shortcut, browser ARIA or live-region mechanism is evidenced in the inspected UI. Preserve host keyboard handling; do not hijack Tab or typing or claim screen-reader/keyboard compliance. Reading order is header → View choices → Unit choices → coverage → breakdowns.
 - If a supported native host focus path is available, reuse it: follow that reading order, show a visible focus indicator distinct from selection, activate choices with Enter/Space, and retain focus on the activated choice. Do not silently introduce a new navigation system. Architect must record any remaining keyboard/screen-reader limitation; full WCAG compliance is not established by this mouse-only change. Terminal cell targets cannot promise a 44px touch target; touch-browser affordances are outside this scope.
 
 ## Review / handoff
 
-Verify both switch directions, active/label/gap clicks, text dragging, shared footer mode across navigation, restart defaults, 40- and 22-column controls, multi-line exact counts, differing dollar/token ranking, every feedback row above, and recovery without losing the unit choice. Existing dollar and tool behavior must remain unchanged.
+- **Architect:** align the existing design with compact formatting and actual-container fit; preserve established token semantics and dollar/tool contracts. Record host measurement/overflow and keyboard/screen-reader limitations, not a terminal-full-width assumption.
+- **SDET:** rendered frame and coordinate-click checks at actual panel widths 45, 40 and 22 inside a wider terminal (for example 120 columns), plus resize at fixed terminal width. Cover all six unit/breakdown combinations; complete control words/brackets, nonoverlap, intact amounts and long-name truncation/stacking. Click each choice after reflow, including selected brackets; labels/gaps/active clicks must not collapse or trigger ancestors. Test dragging/selectability and unchanged keyboard handling.
+- **SDET:** verify compact-format boundaries and promotion against the product table, singular/plural, partial/unavailable/empty states, long names, differing rankings that round to the same string, footer one-line truncation, both switch directions, shared mode/navigation, restart defaults and recovery. All existing dollar/tool behavior remains unchanged. Frame/click proof is required; pure formatting/packing assertions alone do not prove sidebar readability.
+- **CoS:** route aligned contract and test updates to their owners before implementation. No PM question is needed: retain per-amount unit labels as required. Only this UX file changed; no code/tests were run or edited.
 
-**Implementation blocker carried forward:** Architect must establish non-double-counting token semantics and missing-field rules from supported source evidence. **Accessibility limitation:** the inspected plugin provides no keyboard/focus or screen-reader contract; do not represent this reference as proof of AA conformance. No additional product decision is introduced here.
+**Accessibility limitation:** the inspected plugin provides no keyboard/focus or screen-reader contract; do not represent this reference as proof of AA conformance.
