@@ -1,7 +1,10 @@
 // Disposable environment adapter; never configure this in a normal location.
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { Buffer } from "node:buffer";
+import { URL, fileURLToPath, pathToFileURL } from "node:url";
+
+const { Request } = globalThis;
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "environment.json"), "utf8"));
